@@ -1,0 +1,22 @@
+{
+  "name": "fyp-guidance-system",
+  "version": "1.0.0",
+  "description": "Final Year Project Research and Guidance System",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vueuse/core": "^10.4.1",
+    "lucide-vue-next": "^0.279.0",
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.3.4",
+    "autoprefixer": "^10.4.15",
+    "postcss": "^8.4.29",
+    "tailwindcss": "^3.3.3",
+    "vite": "^4.4.9"
+  }
+}
