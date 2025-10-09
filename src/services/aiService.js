@@ -5,8 +5,8 @@ class AIService {
   constructor() {
     // You can switch between different AI providers
     this.provider = 'gemini' // 'openai', 'gemini', 'huggingface'
-    this.apiKey = import.meta.env.VITE_OPENAI_API_KEY || ''
-    this.baseURL = 'https://api.openai.com/v1'
+    this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || ''
+    this.baseURL = 'https://generativelanguage.googleapis.com/v1'
   }
 
   /**
@@ -146,43 +146,71 @@ Make sure the JSON is valid and properly formatted.`
    * Generate topics using Google Gemini API
    */
   async generateWithGemini(prompt) {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-    if (!apiKey) {
-      throw new Error('Gemini API key not configured')
-    }
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+    // Use backend proxy to avoid CORS issues
+    const response = await fetch('http://localhost:3001/api/generate-topics', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2000
-        }
-      })
+      body: JSON.stringify({ prompt })
     })
 
     if (!response.ok) {
-      throw new Error('Gemini API Error')
+      const error = await response.json()
+      throw new Error(`Gemini API Error: ${error.error || 'Unknown error'}`)
     }
 
     const data = await response.json()
-    const content = data.candidates[0].content.parts[0].text
-    
+
+    // Validate candidates exist
+    if (!data || !Array.isArray(data.candidates) || data.candidates.length === 0) {
+      const blockReason = data?.promptFeedback?.blockReason || 'No candidates returned'
+      throw new Error(`Gemini returned no candidates (${blockReason}). Please adjust your input and try again.`)
+    }
+
+    const firstCandidate = data.candidates[0]
+    const parts = firstCandidate?.content?.parts || []
+    const content = parts
+      .map(p => (typeof p.text === 'string' ? p.text : ''))
+      .filter(t => t && t.trim().length > 0)
+      .join('\n')
+      .trim()
+
+    if (!content) {
+      const finishReason = firstCandidate?.finishReason || data?.promptFeedback?.blockReason || 'Empty content'
+      throw new Error(`Gemini produced empty content (${finishReason}). Try again or refine inputs.`)
+    }
+
     try {
-      const jsonMatch = content.match(/\[[\s\S]*\]/)
-      return jsonMatch ? JSON.parse(jsonMatch[0]) : []
-    } catch (error) {
-      throw new Error('Failed to parse Gemini response')
+      // Remove markdown code fences
+      const withoutFences = content.replace(/```json\s*|```/g, '').trim()
+
+      // Extract a balanced JSON array starting from the first '['
+      const startIdx = withoutFences.indexOf('[')
+      if (startIdx === -1) {
+        throw new Error('No JSON array start found in response')
+      }
+      let depth = 0
+      let endIdx = -1
+      for (let i = startIdx; i < withoutFences.length; i++) {
+        const ch = withoutFences[i]
+        if (ch === '[') depth++
+        if (ch === ']') depth--
+        if (depth === 0) { endIdx = i; break }
+      }
+      if (endIdx === -1) {
+        throw new Error('Unbalanced JSON array in response')
+      }
+      let slice = withoutFences.slice(startIdx, endIdx + 1)
+
+      // Remove trailing commas before } or ] to tolerate minor formatting
+      slice = slice.replace(/,(\s*[}\]])/g, '$1')
+
+      return JSON.parse(slice)
+    } catch (parseError) {
+      console.error('JSON Parse Error:', parseError)
+      console.error('Raw Response:', content)
+      throw new Error('Failed to parse Gemini response. Please try again.')
     }
   }
 
@@ -250,7 +278,7 @@ Make sure the JSON is valid and properly formatted.`
   getStatus() {
     return {
       provider: this.provider,
-      hasApiKey: !!this.apiKey,
+      hasApiKey: !!import.meta.env.VITE_GEMINI_API_KEY,
       isConfigured: this.isConfigured()
     }
   }
@@ -261,7 +289,7 @@ Make sure the JSON is valid and properly formatted.`
   isConfigured() {
     switch (this.provider) {
       case 'openai':
-        return !!this.apiKey
+        return !!import.meta.env.VITE_OPENAI_API_KEY
       case 'gemini':
         return !!import.meta.env.VITE_GEMINI_API_KEY
       case 'huggingface':

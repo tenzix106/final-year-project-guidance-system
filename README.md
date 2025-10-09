@@ -4,7 +4,7 @@ A modern, AI-powered Final Year Project Research and Guidance System built with 
 
 ## Features
 
--  **AI-Powered Topic Generation**: Intelligent suggestions using OpenAI GPT, Google Gemini, or Hugging Face
+-  **AI-Powered Topic Generation**: Intelligent suggestions using Google Gemini (primary), OpenAI GPT, or Hugging Face
 -  **Personalized Recommendations**: Based on student profile, skills, and interests
 -  **Comprehensive Form**: Detailed input form covering skills, interests, and project requirements
 -  **Resource Library**: Curated collection of academic papers, tools, and learning materials
@@ -47,8 +47,8 @@ npm install
 cp env.example .env
 
 # Edit .env and add your API keys
+# VITE_GEMINI_API_KEY=your_gemini_api_key_here (Primary - Currently Active)
 # VITE_OPENAI_API_KEY=your_openai_api_key_here
-# VITE_GEMINI_API_KEY=your_gemini_api_key_here
 # VITE_HUGGINGFACE_API_KEY=your_huggingface_token_here
 ```
 
@@ -160,15 +160,16 @@ This project is licensed under the MIT License.
 
 The system supports multiple AI providers for topic generation:
 
-### OpenAI GPT (Recommended)
+### Google Gemini (Primary - Currently Active)
+- **Setup**: Get API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+- **Cost**: Competitive pricing with generous free tier
+- **Quality**: Excellent performance with Gemini 2.5 Flash model
+- **Features**: Advanced safety settings and reliable JSON output
+
+### OpenAI GPT (Alternative)
 - **Setup**: Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
 - **Cost**: ~$0.001-0.002 per topic generation
 - **Quality**: High-quality, contextually relevant topics
-
-### Google Gemini (Alternative)
-- **Setup**: Get API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-- **Cost**: Competitive pricing
-- **Quality**: Good performance with recent model updates
 
 ### Hugging Face (Free Option)
 - **Setup**: Get token from [Hugging Face](https://huggingface.co/settings/tokens)
