@@ -7,6 +7,7 @@ class AIService {
     this.provider = 'gemini' // 'openai', 'gemini', 'huggingface'
     this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || ''
     this.baseURL = 'https://generativelanguage.googleapis.com/v1'
+    this.backendBaseURL = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:3001'
   }
 
   /**
@@ -146,8 +147,9 @@ Make sure the JSON is valid and properly formatted.`
    * Generate topics using Google Gemini API
    */
   async generateWithGemini(prompt) {
-    // Use backend proxy to avoid CORS issues
-    const response = await fetch('http://localhost:3001/api/generate-topics', {
+    // Use Flask backend to avoid CORS issues and unify backend
+    const flaskBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+    const response = await fetch(`${flaskBase}/api/ai/generate-topics`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
