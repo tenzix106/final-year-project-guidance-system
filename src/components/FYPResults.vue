@@ -103,7 +103,7 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
-          <button class="btn-primary flex-1">
+          <button @click="openProposal(topic)" class="btn-primary flex-1">
             <FileText class="w-4 h-4 mr-2" />
             View Full Proposal
           </button>
@@ -139,6 +139,13 @@
         Go to Form
       </button>
     </div>
+
+    <!-- Proposal Modal -->
+    <ProposalModal 
+      :is-open="isModalOpen" 
+      :topic="selectedTopic" 
+      @close="closeProposal" 
+    />
   </div>
 </template>
 
@@ -148,6 +155,8 @@ import {
   Plus, Search, ArrowUp, FileText as PaperIcon, 
   PlayCircle as TutorialIcon, Wrench as ToolIcon 
 } from 'lucide-vue-next'
+import { ref } from 'vue'
+import ProposalModal from './ProposalModal.vue'
 
 const props = defineProps({
   topics: {
@@ -159,6 +168,20 @@ const props = defineProps({
     default: false
   }
 })
+
+// Modal state
+const isModalOpen = ref(false)
+const selectedTopic = ref(null)
+
+const openProposal = (topic) => {
+  selectedTopic.value = topic
+  isModalOpen.value = true
+}
+
+const closeProposal = () => {
+  isModalOpen.value = false
+  selectedTopic.value = null
+}
 
 const getDifficultyClass = (difficulty) => {
   const classes = {

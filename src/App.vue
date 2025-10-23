@@ -13,12 +13,52 @@
               <p class="text-sm text-gray-600">Research & Topic Generator</p>
             </div>
           </div>
-          <nav class="hidden md:flex space-x-8">
-            <a href="#form" class="text-gray-600 hover:text-primary-600 transition-colors">Generate Topics</a>
-            <a href="#results" class="text-gray-600 hover:text-primary-600 transition-colors">View Results</a>
-            <a href="#resources" class="text-gray-600 hover:text-primary-600 transition-colors">Resources</a>
-            <a href="#setup" class="text-gray-600 hover:text-primary-600 transition-colors">AI Setup</a>
-          </nav>
+          
+          <div class="flex items-center space-x-6">
+            <!-- Navigation -->
+            <nav class="hidden md:flex space-x-8">
+              <a href="#form" class="text-gray-600 hover:text-primary-600 transition-colors">Generate Topics</a>
+              <a href="#results" class="text-gray-600 hover:text-primary-600 transition-colors">View Results</a>
+              <a href="#resources" class="text-gray-600 hover:text-primary-600 transition-colors">Resources</a>
+              <a href="#setup" class="text-gray-600 hover:text-primary-600 transition-colors">AI Setup</a>
+            </nav>
+
+            <!-- Auth Section -->
+            <div class="flex items-center space-x-3">
+              <!-- Authenticated User -->
+              <div v-if="isAuthenticated" class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2 text-sm">
+                  <div class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center">
+                    <User class="w-4 h-4" />
+                  </div>
+                  <span class="text-gray-700 font-medium">{{ currentUser?.email }}</span>
+                </div>
+                <button 
+                  @click="handleLogout"
+                  class="text-gray-600 hover:text-gray-800 transition-colors flex items-center space-x-1"
+                >
+                  <LogOut class="w-4 h-4" />
+                  <span class="hidden sm:inline">Logout</span>
+                </button>
+              </div>
+
+              <!-- Not Authenticated -->
+              <div v-else class="flex items-center space-x-3">
+                <button 
+                  @click="openAuthModal('login')"
+                  class="text-gray-600 hover:text-primary-600 transition-colors font-medium"
+                >
+                  Sign In
+                </button>
+                <button 
+                  @click="openAuthModal('register')"
+                  class="bg-gradient-to-r from-primary-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-primary-700 hover:to-purple-700 transition-all duration-200"
+                >
+                  Sign Up
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -149,23 +189,37 @@
         </div>
       </div>
     </footer>
+
+    <!-- Auth Modal -->
+    <AuthModal 
+      :is-open="authModalOpen"
+      :initial-mode="authModalMode"
+      @close="closeAuthModal"
+      @success="handleAuthSuccess"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { GraduationCap, Sparkles, BookOpen, AlertCircle } from 'lucide-vue-next'
+import { GraduationCap, Sparkles, BookOpen, AlertCircle, User, LogOut } from 'lucide-vue-next'
 import FYPForm from './components/FYPForm.vue'
 import FYPResults from './components/FYPResults.vue'
 import FYPResources from './components/FYPResources.vue'
 import AISetupGuide from './components/AISetupGuide.vue'
+import AuthModal from './components/AuthModal.vue'
 import aiService from './services/aiService.js'
+import authService, { isAuthenticated, currentUser } from './services/authService.js'
 
 const generatedTopics = ref([])
 const isLoading = ref(false)
 const aiError = ref('')
 const aiStatus = ref({})
 const useAI = ref(false)
+
+// Auth state
+const authModalOpen = ref(false)
+const authModalMode = ref('login')
 
 const scrollToForm = () => {
   document.getElementById('form')?.scrollIntoView({ behavior: 'smooth' })
@@ -231,7 +285,15 @@ const generateMockTopics = (formData) => {
         { type: "Tutorial", title: "Building ML Models with TensorFlow", url: "#" },
         { type: "Tool", title: "React.js Documentation", url: "#" }
       ],
-      tags: ["AI/ML", "Education", "Web Development"]
+      tags: ["AI/ML", "Education", "Web Development"],
+      objectives: [
+        "Design and implement machine learning algorithms for personalized content recommendation",
+        "Create an adaptive user interface that responds to individual learning patterns",
+        "Develop a comprehensive analytics dashboard for educators and administrators",
+        "Implement secure user authentication and data privacy measures"
+      ],
+      methodology: "This project will follow an agile development methodology, starting with user research and requirements gathering, followed by iterative design and development cycles. The machine learning component will be developed using TensorFlow and scikit-learn, while the web application will be built using React.js and Node.js. User testing will be conducted throughout the development process to ensure the system meets educational needs.",
+      expectedOutcomes: "Upon completion, this project will deliver a fully functional AI-powered LMS that can adapt to individual learning styles, improve student engagement, and provide valuable insights to educators. The system will demonstrate measurable improvements in learning outcomes and user satisfaction compared to traditional LMS platforms."
     })
   }
   
@@ -253,7 +315,15 @@ const generateMockTopics = (formData) => {
         { type: "Tutorial", title: "Building Analytics Dashboards", url: "#" },
         { type: "Tool", title: "Google Analytics API Documentation", url: "#" }
       ],
-      tags: ["Marketing", "Analytics", "Business Intelligence"]
+      tags: ["Marketing", "Analytics", "Business Intelligence"],
+      objectives: [
+        "Develop a unified dashboard integrating multiple marketing channels (social media, email, PPC, SEO)",
+        "Implement real-time data visualization and reporting capabilities",
+        "Create automated alert systems for campaign performance monitoring",
+        "Design user-friendly interfaces for different stakeholder roles"
+      ],
+      methodology: "The project will utilize a data-driven approach, starting with comprehensive market research and stakeholder interviews. The dashboard will be built using modern web technologies including React.js for the frontend and Node.js for the backend. Data integration will be achieved through APIs from various marketing platforms, with data processing handled by Python scripts and visualization powered by D3.js or Chart.js.",
+      expectedOutcomes: "The final product will be a comprehensive analytics dashboard that provides marketers with actionable insights, reduces manual reporting time by 70%, and improves campaign ROI through better data-driven decision making. The system will support multiple user roles and provide customizable reporting features."
     })
   }
   
@@ -275,7 +345,15 @@ const generateMockTopics = (formData) => {
         { type: "Tutorial", title: "IoT Sensor Networks for Energy Monitoring", url: "#" },
         { type: "Tool", title: "Arduino and Raspberry Pi Integration", url: "#" }
       ],
-      tags: ["IoT", "Energy", "Sustainability", "Automation"]
+      tags: ["IoT", "Energy", "Sustainability", "Automation"],
+      objectives: [
+        "Design and deploy a network of IoT sensors for real-time energy monitoring",
+        "Develop predictive algorithms for energy consumption optimization",
+        "Create a centralized management system for building operators",
+        "Implement automated control systems for HVAC and lighting optimization"
+      ],
+      methodology: "This project follows a systems engineering approach, beginning with energy audit and requirements analysis. Hardware components will include Arduino/Raspberry Pi-based sensors, wireless communication modules, and actuators. The software stack will comprise embedded C/C++ for sensors, Python for data processing and machine learning, and a web-based dashboard using React.js. Machine learning models will be trained using TensorFlow to predict energy patterns and optimize consumption.",
+      expectedOutcomes: "The completed system will demonstrate 15-25% reduction in energy consumption, provide real-time monitoring capabilities, and offer predictive maintenance features. The solution will be scalable to different building types and sizes, with potential for commercial deployment and positive environmental impact."
     })
   }
   
@@ -363,5 +441,30 @@ const generateMockTopics = (formData) => {
   }
   
   return topics.slice(0, 3) // Return up to 3 topics
+}
+
+// Authentication methods
+const openAuthModal = (mode = 'login') => {
+  authModalMode.value = mode
+  authModalOpen.value = true
+}
+
+const closeAuthModal = () => {
+  authModalOpen.value = false
+}
+
+const handleAuthSuccess = (userData) => {
+  console.log('Authentication successful:', userData)
+  closeAuthModal()
+  // User state is automatically updated by authService reactive state
+}
+
+const handleLogout = async () => {
+  try {
+    await authService.logout()
+    console.log('User logged out successfully')
+  } catch (error) {
+    console.error('Logout error:', error)
+  }
 }
 </script>

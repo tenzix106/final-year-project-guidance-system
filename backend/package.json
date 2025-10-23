@@ -9,12 +9,20 @@
     "dev": "node server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "node-fetch": "^3.3.2",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
   },
-  "keywords": ["fyp", "guidance", "gemini", "proxy"],
+  "keywords": [
+    "fyp",
+    "guidance",
+    "gemini",
+    "proxy"
+  ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
 }

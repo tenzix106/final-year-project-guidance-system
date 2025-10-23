@@ -1,0 +1,45 @@
+# Docker Compose for FYP Guidance System
+# Future enhancement - requires Dockerfiles for each service
+
+version: '3.8'
+
+services:
+  frontend:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:5000
+      - VITE_BACKEND_BASE_URL=http://localhost:3001
+    depends_on:
+      - express-backend
+      - flask-backend
+
+  express-backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+
+  flask-backend:
+    build: ./backend_flask
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend_flask:/app
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - DATABASE_URL=sqlite:///app.db
+      - SECRET_KEY=dev-secret-key
+      - JWT_SECRET_KEY=dev-jwt-secret
+
+# To use: docker-compose up -d
