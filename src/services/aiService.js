@@ -147,9 +147,9 @@ Make sure the JSON is valid and properly formatted.`
    * Generate topics using Google Gemini API
    */
   async generateWithGemini(prompt) {
-    // Use Flask backend to avoid CORS issues and unify backend
-    const flaskBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
-    const response = await fetch(`${flaskBase}/api/ai/generate-topics`, {
+    // Use Express backend for AI proxy to avoid CORS issues
+    const backendBase = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:3002'
+    const response = await fetch(`${backendBase}/api/generate-topics`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
