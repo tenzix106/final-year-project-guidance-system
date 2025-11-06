@@ -204,6 +204,7 @@ class UserActivity(db.Model):
     )
 
 
+# Junction table for many-to-many relationships if needed
 class UserSkill(db.Model):
     """Track user's declared skills with proficiency levels"""
     id = db.Column(db.Integer, primary_key=True)
@@ -219,4 +220,3 @@ class UserSkill(db.Model):
     
     # Unique constraint to prevent duplicate skills per user
     __table_args__ = (db.UniqueConstraint('user_id', 'skill_name', name='unique_user_skill'),)
-
