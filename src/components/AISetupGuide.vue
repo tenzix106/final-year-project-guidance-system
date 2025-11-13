@@ -61,37 +61,6 @@
         </div>
       </div>
 
-      <!-- Hugging Face Setup -->
-      <div class="mb-8">
-        <div class="flex items-center space-x-3 mb-4">
-          <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-            <Cpu class="w-5 h-5 text-purple-600" />
-          </div>
-          <div>
-            <h4 class="text-xl font-bold text-gray-900">Hugging Face (Free Option)</h4>
-            <p class="text-gray-600">Open-source models with free tier available</p>
-          </div>
-        </div>
-
-        <div class="bg-gray-50 rounded-lg p-6">
-          <h5 class="font-semibold text-gray-900 mb-3">Setup Steps:</h5>
-          <ol class="list-decimal list-inside space-y-2 text-sm text-gray-700">
-            <li>Visit <a href="https://huggingface.co/settings/tokens" target="_blank" class="text-primary-600 hover:underline">Hugging Face</a> and create an account</li>
-            <li>Generate an access token (optional for free tier)</li>
-            <li>Add to your <code class="bg-gray-200 px-2 py-1 rounded text-xs">.env</code> file: <code class="bg-gray-200 px-2 py-1 rounded text-xs">VITE_HUGGINGFACE_API_KEY=your_token_here</code></li>
-            <li>Update the provider in <code class="bg-gray-200 px-2 py-1 rounded text-xs">src/services/aiService.js</code></li>
-          </ol>
-          
-          <div class="mt-4 p-4 bg-green-50 rounded-lg">
-            <h6 class="font-semibold text-green-900 mb-2">Free Tier:</h6>
-            <p class="text-sm text-green-800">
-              Hugging Face offers free API access with rate limits. 
-              Perfect for development and testing.
-            </p>
-          </div>
-        </div>
-      </div>
-
       <!-- Configuration Example -->
       <div class="mb-8">
         <h4 class="text-xl font-bold text-gray-900 mb-4">Environment Configuration</h4>
