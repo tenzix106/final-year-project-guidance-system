@@ -129,6 +129,8 @@ class GeneratedProject(db.Model):
 
 class SavedProject(db.Model):
     """Projects bookmarked/saved by users"""
+    __tablename__ = 'saved_project'
+    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     project_topic_id = db.Column(db.Integer, db.ForeignKey('project_topic.id'), nullable=False)
@@ -140,11 +142,37 @@ class SavedProject(db.Model):
     is_favorite = db.Column(db.Boolean, default=False, nullable=False)
     
     # Progress tracking
-    status = db.Column(db.String(20), default='saved', nullable=False)  # saved, in_progress, completed, abandoned
+    status = db.Column(db.String(20), default='saved', nullable=False)  # saved, not_started, in_progress, completed, abandoned
     progress_percentage = db.Column(db.Integer, default=0, nullable=False)
+    
+    # Timeline tracking
+    progress_tracking_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    start_date = db.Column(db.DateTime, nullable=True)
+    expected_completion_date = db.Column(db.DateTime, nullable=True)
+    actual_completion_date = db.Column(db.DateTime, nullable=True)
+    
+    # Relationships
+    phases = db.relationship('ProjectPhase', back_populates='saved_project', cascade='all, delete-orphan', lazy='dynamic')
     
     # Unique constraint to prevent duplicate saves
     __table_args__ = (db.UniqueConstraint('user_id', 'project_topic_id', name='unique_user_project_save'),)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'project_topic_id': self.project_topic_id,
+            'saved_at': self.saved_at.isoformat() if self.saved_at else None,
+            'user_notes': self.user_notes,
+            'custom_title': self.custom_title,
+            'is_favorite': self.is_favorite,
+            'status': self.status,
+            'progress_percentage': self.progress_percentage,
+            'progress_tracking_enabled': self.progress_tracking_enabled,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'expected_completion_date': self.expected_completion_date.isoformat() if self.expected_completion_date else None,
+            'actual_completion_date': self.actual_completion_date.isoformat() if self.actual_completion_date else None
+        }
 
 
 class ResourceCategory(db.Model):
@@ -219,4 +247,93 @@ class UserSkill(db.Model):
     
     # Unique constraint to prevent duplicate skills per user
     __table_args__ = (db.UniqueConstraint('user_id', 'skill_name', name='unique_user_skill'),)
+
+
+class ProjectPhase(db.Model):
+    """Individual phases/milestones within a saved project"""
+    __tablename__ = 'project_phase'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    saved_project_id = db.Column(db.Integer, db.ForeignKey('saved_project.id'), nullable=False)
+    
+    # Phase details
+    phase_name = db.Column(db.String(100), nullable=False)
+    phase_order = db.Column(db.Integer, nullable=False)  # 1, 2, 3...
+    description = db.Column(Text, nullable=True)
+    
+    # Timeline
+    estimated_duration_weeks = db.Column(db.Integer, nullable=True)
+    start_date = db.Column(db.DateTime, nullable=True)
+    end_date = db.Column(db.DateTime, nullable=True)
+    actual_completion_date = db.Column(db.DateTime, nullable=True)
+    
+    # Status
+    status = db.Column(db.String(20), default='not_started', nullable=False)  # not_started, in_progress, completed, blocked
+    progress_percentage = db.Column(db.Integer, default=0, nullable=False)
+    notes = db.Column(Text, nullable=True)
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    saved_project = db.relationship('SavedProject', back_populates='phases')
+    tasks = db.relationship('PhaseTask', back_populates='phase', cascade='all, delete-orphan', lazy='dynamic')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'saved_project_id': self.saved_project_id,
+            'phase_name': self.phase_name,
+            'phase_order': self.phase_order,
+            'description': self.description,
+            'estimated_duration_weeks': self.estimated_duration_weeks,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'end_date': self.end_date.isoformat() if self.end_date else None,
+            'actual_completion_date': self.actual_completion_date.isoformat() if self.actual_completion_date else None,
+            'status': self.status,
+            'progress_percentage': self.progress_percentage,
+            'notes': self.notes,
+            'tasks': [task.to_dict() for task in self.tasks.all()] if self.tasks else []
+        }
+
+
+class PhaseTask(db.Model):
+    """Specific tasks within each project phase"""
+    __tablename__ = 'phase_task'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    phase_id = db.Column(db.Integer, db.ForeignKey('project_phase.id'), nullable=False)
+    
+    # Task details
+    task_name = db.Column(db.String(300), nullable=False)
+    description = db.Column(Text, nullable=True)
+    task_order = db.Column(db.Integer, nullable=True)
+    
+    # Status
+    is_completed = db.Column(db.Boolean, default=False, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    
+    # Optional deadline
+    due_date = db.Column(db.DateTime, nullable=True)
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    phase = db.relationship('ProjectPhase', back_populates='tasks')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'phase_id': self.phase_id,
+            'task_name': self.task_name,
+            'description': self.description,
+            'task_order': self.task_order,
+            'is_completed': self.is_completed,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'due_date': self.due_date.isoformat() if self.due_date else None
+        }
+
 

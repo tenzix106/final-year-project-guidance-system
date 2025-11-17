@@ -107,9 +107,23 @@
             <FileText class="w-4 h-4 mr-2" />
             View Full Proposal
           </button>
-          <button class="btn-secondary">
-            <Heart class="w-4 h-4 mr-2" />
-            Save to Favorites
+          <button 
+            @click="toggleFavourite(topic)" 
+            :disabled="isSavingFavourite(topic.title)"
+            :class="[
+              'btn-secondary',
+              isFavourite(topic.title) ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : '',
+              isSavingFavourite(topic.title) ? 'opacity-50 cursor-not-allowed' : ''
+            ]">
+            <component 
+              :is="isSavingFavourite(topic.title) ? Loader2 : Heart" 
+              :class="[
+                'w-4 h-4 mr-2',
+                isSavingFavourite(topic.title) ? 'animate-spin' : '',
+                isFavourite(topic.title) ? 'fill-current' : ''
+              ]"
+            />
+            {{ isFavourite(topic.title) ? 'Remove from Favorites' : 'Save to Favorites' }}
           </button>
           <button class="btn-secondary">
             <Share2 class="w-4 h-4 mr-2" />
@@ -155,8 +169,10 @@ import {
   Plus, Search, ArrowUp, FileText as PaperIcon, 
   PlayCircle as TutorialIcon, Wrench as ToolIcon 
 } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import ProposalModal from './ProposalModal.vue'
+import favouriteService from '../services/favouriteService.js'
+import authService from '../services/authService.js'
 
 const props = defineProps({
   topics: {
@@ -172,6 +188,66 @@ const props = defineProps({
 // Modal state
 const isModalOpen = ref(false)
 const selectedTopic = ref(null)
+
+// Favourites state
+const savingFavourites = ref(new Set())
+const favouriteStatuses = ref(new Map())
+
+// Load favourite statuses when topics change
+const loadFavouriteStatuses = async () => {
+  for (const topic of props.topics) {
+    try {
+      const status = await favouriteService.checkFavouriteStatus(topic.title)
+      favouriteStatuses.value.set(topic.title, status)
+    } catch (error) {
+      console.error('Error checking favourite status:', error)
+    }
+  }
+}
+
+// Check if topic is favourite
+const isFavourite = (topicTitle) => {
+  const status = favouriteStatuses.value.get(topicTitle)
+  return status?.is_favourite || false
+}
+
+// Save/unsave favourite
+const toggleFavourite = async (topic) => {
+  // Check authentication first
+  if (!authService.authenticated) {
+    alert('Please log in to save favourites')
+    return
+  }
+
+  const isCurrentlyFavourite = isFavourite(topic.title)
+  savingFavourites.value.add(topic.title)
+  
+  try {
+    if (isCurrentlyFavourite) {
+      // Remove from favourites
+      const status = favouriteStatuses.value.get(topic.title)
+      if (status?.favourite_id) {
+        await favouriteService.removeFavourite(status.favourite_id)
+        favouriteStatuses.value.set(topic.title, { is_favourite: false })
+      }
+    } else {
+      // Add to favourites
+      await favouriteService.saveFavourite(topic)
+      favouriteStatuses.value.set(topic.title, { is_favourite: true })
+    }
+  } catch (error) {
+    console.error('Error toggling favourite:', error)
+    // Show error message to user (you might want to add a toast notification system)
+    alert(`Error ${isCurrentlyFavourite ? 'removing' : 'saving'} favourite: ${error.message}`)
+  } finally {
+    savingFavourites.value.delete(topic.title)
+  }
+}
+
+// Check if currently saving
+const isSavingFavourite = (topicTitle) => {
+  return savingFavourites.value.has(topicTitle)
+}
 
 const openProposal = (topic) => {
   selectedTopic.value = topic
@@ -213,4 +289,18 @@ const getResourceIcon = (type) => {
 const scrollToForm = () => {
   document.getElementById('form')?.scrollIntoView({ behavior: 'smooth' })
 }
+
+// Load favourite statuses when component mounts or topics change
+onMounted(() => {
+  if (props.topics.length > 0) {
+    loadFavouriteStatuses()
+  }
+})
+
+// Watch for topics changes
+watch(() => props.topics, (newTopics) => {
+  if (newTopics && newTopics.length > 0) {
+    loadFavouriteStatuses()
+  }
+}, { immediate: true })
 </script>

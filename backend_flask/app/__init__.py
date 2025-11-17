@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from .config import Config
 from .extensions import db, migrate, bcrypt, jwt, cors
 from .auth.routes import auth_bp
+from .favourites.routes import favourites_bp
+from .progress import progress_bp
 from . import models  # ensure models are registered for migrations
 
 
@@ -24,6 +26,8 @@ def create_app() -> Flask:
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(favourites_bp, url_prefix="/api/favourites")
+    app.register_blueprint(progress_bp, url_prefix="/api/progress")
 
     return app
 

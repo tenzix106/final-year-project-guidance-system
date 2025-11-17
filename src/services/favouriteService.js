@@ -1,4 +1,5 @@
 import { ref } from "vue";
+import authService from './authService.js';
 
 class FavouriteService {
   constructor() {
@@ -7,18 +8,18 @@ class FavouriteService {
     this.isLoading = ref(false);
   }
 
+  getAuthHeaders() {
+    return authService.getAuthHeaders();
+  }
+
   async getFavourites() {
     this.isLoading.value = true;
     try {
-      const token = localStorage.getItem("auth.token");
-      if (!token) {
+      if (!authService.authenticated) {
         throw new Error("No auth token found");
       }
       const response = await fetch(`${this.baseUrl}/api/favourites`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: this.getAuthHeaders(),
       });
       if (!response.ok) {
         throw new Error("Failed to fetch favourites");
@@ -37,17 +38,14 @@ class FavouriteService {
   }
 
   async saveFavourite(topicData, notes = "") {
+    this.isLoading.value = true;
     try {
-      const token = localStorage.getItem("auth.token");
-      if (!token) {
+      if (!authService.authenticated) {
         throw new Error("No auth token found");
       }
       const response = await fetch(`${this.baseUrl}/api/favourites`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: this.getAuthHeaders(),
         body: JSON.stringify({ topicData, notes }),
       });
       if (!response.ok) {
@@ -57,9 +55,10 @@ class FavouriteService {
 
       const data = await response.json();
 
+      // Refresh favourites list
       await this.getFavourites();
 
-      return result;
+      return data;
     } catch (error) {
       console.error("Error saving favourite:", error);
       throw error;
@@ -68,26 +67,24 @@ class FavouriteService {
     }
   }
 
-  async removeFavourtie(favouriteId) {
+  async removeFavourite(favouriteId) {
+    this.isLoading.value = true;
     try {
-      const token = localStorage.getItem("auth.token");
-      if (!token) {
+      if (!authService.authenticated) {
         throw new Error("No auth token found");
       }
       const response = await fetch(
         `${this.baseUrl}/api/favourites/${favouriteId}`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: this.getAuthHeaders(),
         }
       );
       if (!response.ok) {
         throw new Error("Failed to remove favourite");
       }
 
+      // Update local state
       this.favourites.value = this.favourites.value.filter(
         (fav) => fav.id !== favouriteId
       );
@@ -96,28 +93,29 @@ class FavouriteService {
     } catch (error) {
       console.error("Remove Favourite Error:", error);
       throw error;
+    } finally {
+      this.isLoading.value = false;
     }
   }
 
-  async updateNotes(favouriteId, notes) {
+  async updateNotes(favouriteId, notes, progressStatus = null) {
+    this.isLoading.value = true;
     try {
-      const token = localStorage.getItem("auth.token");
-      if (!token) {
+      if (!authService.authenticated) {
         throw new Error("No auth token found");
       }
 
+      const body = { notes };
+      if (progressStatus) {
+        body.progress_status = progressStatus;
+      }
+
       const response = await fetch(
-        `${this.baseURL}/api/favorites/${favoriteId}/notes`,
+        `${this.baseUrl}/api/favourites/${favouriteId}/notes`,
         {
           method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            notes: notes,
-            progress_status: progressStatus,
-          }),
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify(body),
         }
       );
 
@@ -125,27 +123,63 @@ class FavouriteService {
         throw new Error("Failed to update notes");
       }
 
-      // Update local favorites list
-      const favoriteIndex = this.favorites.value.findIndex(
-        (fav) => fav.id === favoriteId
+      // Update local favourites list
+      const favouriteIndex = this.favourites.value.findIndex(
+        (fav) => fav.id === favouriteId
       );
-      if (favoriteIndex !== -1) {
-        this.favorites.value[favoriteIndex].notes = notes;
-        this.favorites.value[favoriteIndex].progress_status = progressStatus;
+      if (favouriteIndex !== -1) {
+        this.favourites.value[favouriteIndex].user_notes = notes;
+        if (progressStatus) {
+          this.favourites.value[favouriteIndex].status = progressStatus;
+        }
       }
 
       return await response.json();
     } catch (error) {
       console.error("Update Notes Error:", error);
       throw error;
+    } finally {
+      this.isLoading.value = false;
+    }
+  }
+
+  async checkFavouriteStatus(topicTitle) {
+    try {
+      if (!authService.authenticated) {
+        return { is_favourite: false };
+      }
+      
+      const encodedTitle = encodeURIComponent(topicTitle);
+      const response = await fetch(
+        `${this.baseUrl}/api/favourites/check/${encodedTitle}`,
+        {
+          headers: this.getAuthHeaders(),
+        }
+      );
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      
+      return { is_favourite: false };
+    } catch (error) {
+      console.error("Check favourite status error:", error);
+      return { is_favourite: false };
     }
   }
 
   isFavourite(topicTitle) {
-    return this.favourites.value.some((fav) => fav.title === topicTitle);
+    return this.favourites.value.some(
+      (fav) => fav.project_topic && fav.project_topic.title === topicTitle
+    );
   }
 
   getFavouriteByTitle(topicTitle) {
-    return this.favourites.value.find((fav) => fav.title === topicTitle);
+    return this.favourites.value.find(
+      (fav) => fav.project_topic && fav.project_topic.title === topicTitle
+    );
   }
 }
+
+// Export singleton instance
+export default new FavouriteService();
