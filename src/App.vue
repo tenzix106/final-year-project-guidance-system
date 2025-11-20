@@ -17,10 +17,15 @@
           <div class="flex items-center space-x-6">
             <!-- Navigation -->
             <nav class="hidden md:flex space-x-8">
-              <a href="#form" class="text-gray-600 hover:text-primary-600 transition-colors">Generate Topics</a>
-              <a href="#results" class="text-gray-600 hover:text-primary-600 transition-colors">View Results</a>
-              <a href="#resources" class="text-gray-600 hover:text-primary-600 transition-colors">Resources</a>
-              <a href="#setup" class="text-gray-600 hover:text-primary-600 transition-colors">AI Setup</a>
+              <button @click="setActiveView('home')" :class="activeView === 'home' ? 'text-primary-600 font-semibold' : 'text-gray-600 hover:text-primary-600 transition-colors'">
+                Home
+              </button>
+              <button v-if="isAuthenticated" @click="setActiveView('favourites')" :class="activeView === 'favourites' ? 'text-primary-600 font-semibold' : 'text-gray-600 hover:text-primary-600 transition-colors'" class="flex items-center space-x-1">
+                <Heart class="w-4 h-4" />
+                <span>My Favourites</span>
+              </button>
+              <a v-if="activeView === 'home'" href="#resources" class="text-gray-600 hover:text-primary-600 transition-colors">Resources</a>
+              <a v-if="activeView === 'home'" href="#setup" class="text-gray-600 hover:text-primary-600 transition-colors">AI Setup</a>
             </nav>
 
             <!-- Auth Section -->
@@ -88,7 +93,7 @@
     </section>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+    <main v-if="activeView === 'home'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
       <!-- AI Status Banner -->
       <div v-if="aiStatus.provider" class="mb-8">
         <div class="card max-w-4xl mx-auto">
@@ -152,6 +157,11 @@
       </section>
     </main>
 
+    <!-- Favourites Page View -->
+    <main v-if="activeView === 'favourites'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <FavouritesPage @navigate-home="setActiveView('home')" />
+    </main>
+
     <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -202,12 +212,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { GraduationCap, Sparkles, BookOpen, AlertCircle, User, LogOut } from 'lucide-vue-next'
+import { GraduationCap, Sparkles, BookOpen, AlertCircle, User, LogOut, Heart } from 'lucide-vue-next'
 import FYPForm from './components/FYPForm.vue'
 import FYPResults from './components/FYPResults.vue'
 import FYPResources from './components/FYPResources.vue'
 import AISetupGuide from './components/AISetupGuide.vue'
 import AuthModal from './components/AuthModal.vue'
+import FavouritesPage from './components/FavouritesPage.vue'
 import aiService from './services/aiService.js'
 import authService, { isAuthenticated, currentUser } from './services/authService.js'
 
@@ -220,6 +231,17 @@ const useAI = ref(false)
 // Auth state
 const authModalOpen = ref(false)
 const authModalMode = ref('login')
+
+// View state
+const activeView = ref('home')
+
+const setActiveView = (view) => {
+  activeView.value = view
+  if (view === 'home') {
+    // Optionally scroll to top when going home
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
 
 const scrollToForm = () => {
   document.getElementById('form')?.scrollIntoView({ behavior: 'smooth' })

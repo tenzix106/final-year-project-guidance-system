@@ -43,14 +43,37 @@ class FavouriteService {
       if (!authService.authenticated) {
         throw new Error("No auth token found");
       }
+      
+      // Map frontend topic structure to backend expected structure
+      const mappedTopicData = {
+        title: topicData.title,
+        description: topicData.description,
+        difficulty: topicData.difficulty,
+        timeline: topicData.duration || topicData.timeline, // Map duration to timeline
+        tags: topicData.tags || [],
+        resources: topicData.resources || []
+      };
+      
+      console.log("Sending request to:", `${this.baseUrl}/api/favourites`);
+      console.log("With headers:", this.getAuthHeaders());
+      console.log("With body:", JSON.stringify({ topicData: mappedTopicData, notes }));
+      
       const response = await fetch(`${this.baseUrl}/api/favourites`, {
         method: "POST",
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({ topicData, notes }),
+        body: JSON.stringify({ topicData: mappedTopicData, notes }),
       });
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to save favourite");
+        let errorMessage = "Failed to save favourite";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        console.error("Backend error details:", errorMessage);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();

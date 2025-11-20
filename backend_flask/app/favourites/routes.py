@@ -31,10 +31,9 @@ def get_favourites():
                 "id": project_topic.id,
                 "title": project_topic.title,
                 "description": project_topic.description,
-                "difficulty_level": project_topic.difficulty_level,
-                "estimated_duration": project_topic.estimated_duration,
-                "tags": project_topic.tags,
-                "resources": project_topic.resources
+                "difficulty": project_topic.difficulty,
+                "duration": project_topic.duration,
+                "tags": project_topic.tags or []
             } if project_topic else None
         }
         favourites.append(favourite_data)
@@ -46,13 +45,17 @@ def get_favourites():
 @jwt_required()
 def save_favourite():
     """Save a project topic as favourite"""
+    print("=== SAVE FAVOURITE ROUTE CALLED ===")
     user_id = get_jwt_identity()
+    print(f"User ID: {user_id}")
     data = request.get_json(silent=True) or {}
+    print(f"Request data: {data}")
     
     topic_data = data.get("topicData")
     notes = data.get("notes", "")
     
     if not topic_data:
+        print("ERROR: topicData is required")
         return jsonify({"message": "topicData is required"}), 400
     
     # Create or get project topic
@@ -63,14 +66,20 @@ def save_favourite():
         project_topic = ProjectTopic(
             title=topic_data.get("title", ""),
             description=topic_data.get("description", ""),
-            difficulty_level=topic_data.get("difficulty", "Medium"),
-            estimated_duration=topic_data.get("timeline", "3-6 months"),
+            difficulty=topic_data.get("difficulty", "Medium"),
+            duration=topic_data.get("timeline", "3-6 months"),
             tags=topic_data.get("tags", []),
-            resources=topic_data.get("resources", []),
             created_at=datetime.utcnow()
         )
         db.session.add(project_topic)
         db.session.flush()  # Get the ID without committing
+        
+        # Add resources if provided
+        resources = topic_data.get("resources", [])
+        for resource in resources:
+            # Resources are stored separately in ProjectResource table
+            # For now, we'll skip this as it requires more complex handling
+            pass
     
     # Check if already saved by user
     existing_save = SavedProject.query.filter_by(

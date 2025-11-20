@@ -16,13 +16,26 @@ def create_app() -> Flask:
 
     app = Flask(__name__)
     app.config.from_object(Config())
+    
+    # Disable strict slashes to prevent redirects
+    app.url_map.strict_slashes = False
 
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     jwt.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+    
+    # Configure CORS with proper settings
+    cors.init_app(
+        app, 
+        resources={r"/api/*": {
+            "origins": "*",
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True
+        }}
+    )
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix="/api/auth")

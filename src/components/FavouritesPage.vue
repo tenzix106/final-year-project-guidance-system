@@ -185,8 +185,11 @@ import {
   Heart, Plus, Calendar, Edit3, Trash2, Clock, FileText, 
   Loader2, Save 
 } from 'lucide-vue-next'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineEmits } from 'vue'
 import favouriteService from '../services/favouriteService.js'
+
+// Define emits
+const emit = defineEmits(['navigate-home'])
 
 // Component state
 const editingNotes = ref(null)
@@ -298,9 +301,8 @@ const toggleEditMode = (favouriteId) => {
 }
 
 const goToGenerator = () => {
-  // Navigate to the main page where the form/generator is
-  // You might want to use Vue Router here if you have multiple pages
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  // Emit event to navigate back to home view
+  emit('navigate-home')
 }
 </script>
 
