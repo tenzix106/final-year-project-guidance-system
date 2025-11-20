@@ -1,16 +1,16 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+  <div class="min-h-screen bg-accent-50">
     <!-- Header -->
-    <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+    <header class="bg-white backdrop-blur-md border-b border-secondary-200 sticky top-0 z-50 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-gradient-to-r from-primary-600 to-purple-600 rounded-lg flex items-center justify-center">
+            <div class="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center shadow-md">
               <GraduationCap class="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 class="text-2xl font-bold gradient-text">FYP Guidance</h1>
-              <p class="text-sm text-gray-600">Research & Topic Generator</p>
+              <h1 class="text-2xl font-bold text-primary-600">FYP Guidance</h1>
+              <p class="text-sm text-secondary-600">Research & Topic Generator</p>
             </div>
           </div>
           
@@ -57,7 +57,7 @@
                 </button>
                 <button 
                   @click="openAuthModal('register')"
-                  class="bg-gradient-to-r from-primary-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-primary-700 hover:to-purple-700 transition-all duration-200"
+                  class="bg-primary-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-600 transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                   Sign Up
                 </button>
@@ -73,7 +73,7 @@
       <div class="max-w-4xl mx-auto text-center">
         <h2 class="text-5xl font-bold text-gray-900 mb-6 animate-fade-in">
           Find Your Perfect
-          <span class="gradient-text">Final Year Project</span>
+          <span class="text-primary-600">Final Year Project</span>
         </h2>
         <p class="text-xl text-gray-600 mb-8 animate-slide-up">
           Get AI-powered project suggestions tailored to your interests, skills, and academic requirements.
@@ -168,12 +168,12 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <div class="flex items-center space-x-3 mb-4">
-              <div class="w-8 h-8 bg-gradient-to-r from-primary-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center shadow-md">
                 <GraduationCap class="w-5 h-5 text-white" />
               </div>
-              <span class="text-xl font-bold gradient-text">FYP Guidance</span>
+              <span class="text-xl font-bold text-primary-600">FYP Guidance</span>
             </div>
-            <p class="text-gray-600">
+            <p class="text-secondary-600">
               Empowering students with AI-driven project suggestions and comprehensive research guidance.
             </p>
           </div>

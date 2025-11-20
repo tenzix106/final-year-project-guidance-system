@@ -2,7 +2,7 @@
   <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto" @click.self="closeModal">
     <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[98vh] sm:max-h-[95vh] my-auto flex flex-col animate-fade-in">
       <!-- Header -->
-      <div class="relative bg-gradient-to-r from-primary-600 to-purple-600 text-white p-4 sm:p-6 flex-shrink-0 rounded-t-3xl">
+      <div class="relative bg-primary-500 text-white p-4 sm:p-6 flex-shrink-0 rounded-t-3xl">
         <button @click="closeModal" class="absolute top-4 right-4 p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors">
           <X class="w-5 h-5" />
         </button>
@@ -104,7 +104,7 @@
           <button
             type="submit"
             :disabled="loading"
-            class="w-full bg-gradient-to-r from-primary-600 to-purple-600 text-white py-2.5 px-4 rounded-xl font-semibold hover:from-primary-700 hover:to-purple-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+            class="w-full bg-primary-500 text-white py-2.5 px-4 rounded-xl font-semibold hover:bg-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
           >
             <Loader2 v-if="loading" class="w-5 h-5 animate-spin" />
             <span>{{ loading ? 'Signing In...' : 'Sign In' }}</span>
@@ -187,7 +187,7 @@
           <button
             type="submit"
             :disabled="loading || !canRegister"
-            class="w-full bg-gradient-to-r from-primary-600 to-purple-600 text-white py-2.5 px-4 rounded-xl font-semibold hover:from-primary-700 hover:to-purple-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+            class="w-full bg-primary-500 text-white py-2.5 px-4 rounded-xl font-semibold hover:bg-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
           >
             <Loader2 v-if="loading" class="w-5 h-5 animate-spin" />
             <span>{{ loading ? 'Creating Account...' : 'Create Account' }}</span>

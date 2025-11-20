@@ -8,6 +8,10 @@ class ProgressService {
     this.isLoading = ref(false)
   }
 
+  async initializeProgress(savedProjectId, startDate = null) {
+    return this.initializeTracking(savedProjectId, startDate)
+  }
+
   async initializeTracking(savedProjectId, startDate = null) {
     this.isLoading.value = true
     try {
@@ -71,6 +75,10 @@ class ProgressService {
     }
   }
 
+  async updatePhaseStatus(savedProjectId, phaseId, newStatus) {
+    return this.updatePhase(phaseId, { status: newStatus })
+  }
+
   async updatePhase(phaseId, updates) {
     try {
       if (!authService.authenticated) {
@@ -106,7 +114,7 @@ class ProgressService {
     }
   }
 
-  async toggleTask(taskId) {
+  async toggleTask(savedProjectId, phaseId, taskId) {
     try {
       if (!authService.authenticated) {
         throw new Error('Not authenticated')
@@ -122,28 +130,7 @@ class ProgressService {
 
       if (!response.ok) throw new Error('Failed to toggle task')
 
-      const data = await response.json()
-      
-      // Update local state
-      if (this.currentProgress.value) {
-        if (this.currentProgress.value.project) {
-          this.currentProgress.value.project.progress_percentage = data.project_progress
-        }
-        
-        // Find and update the task
-        if (this.currentProgress.value.phases) {
-          for (const phase of this.currentProgress.value.phases) {
-            const taskIndex = phase.tasks.findIndex(t => t.id === taskId)
-            if (taskIndex !== -1) {
-              phase.tasks[taskIndex] = data.task
-              phase.progress_percentage = data.phase_progress
-              break
-            }
-          }
-        }
-      }
-      
-      return data
+      return await response.json()
 
     } catch (error) {
       console.error('Toggle task error:', error)
@@ -151,7 +138,7 @@ class ProgressService {
     }
   }
 
-  async addTask(phaseId, taskData) {
+  async addTask(savedProjectId, phaseId, taskTitle) {
     try {
       if (!authService.authenticated) {
         throw new Error('Not authenticated')
@@ -162,23 +149,16 @@ class ProgressService {
         {
           method: 'POST',
           headers: authService.getAuthHeaders(),
-          body: JSON.stringify({ phase_id: phaseId, ...taskData })
+          body: JSON.stringify({ 
+            phase_id: phaseId, 
+            task_title: taskTitle 
+          })
         }
       )
 
       if (!response.ok) throw new Error('Failed to add task')
 
-      const data = await response.json()
-      
-      // Update local state
-      if (this.currentProgress.value && this.currentProgress.value.phases) {
-        const phase = this.currentProgress.value.phases.find(p => p.id === phaseId)
-        if (phase && phase.tasks) {
-          phase.tasks.push(data.task)
-        }
-      }
-      
-      return data
+      return await response.json()
 
     } catch (error) {
       console.error('Add task error:', error)
@@ -186,7 +166,7 @@ class ProgressService {
     }
   }
 
-  async deleteTask(taskId) {
+  async deleteTask(savedProjectId, phaseId, taskId) {
     try {
       if (!authService.authenticated) {
         throw new Error('Not authenticated')
@@ -201,17 +181,6 @@ class ProgressService {
       )
 
       if (!response.ok) throw new Error('Failed to delete task')
-
-      // Update local state
-      if (this.currentProgress.value && this.currentProgress.value.phases) {
-        for (const phase of this.currentProgress.value.phases) {
-          const taskIndex = phase.tasks.findIndex(t => t.id === taskId)
-          if (taskIndex !== -1) {
-            phase.tasks.splice(taskIndex, 1)
-            break
-          }
-        }
-      }
 
       return await response.json()
 

@@ -37,7 +37,7 @@
         <div class="flex items-start justify-between mb-4">
           <div class="flex-1">
             <div class="flex items-center space-x-3 mb-2">
-              <div class="w-8 h-8 bg-gradient-to-r from-primary-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
                 <Heart class="w-4 h-4 text-white fill-current" />
               </div>
               <div>
@@ -117,6 +117,36 @@
           </div>
         </div>
 
+        <!-- Progress Tracking Section -->
+        <div class="border-t border-gray-200 pt-4 mb-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-sm font-medium text-gray-700 flex items-center">
+              <TrendingUp class="w-4 h-4 mr-2" />
+              Project Timeline
+            </h4>
+            <div class="flex gap-2">
+              <button 
+                v-if="favourite.progress_percentage > 0"
+                @click="viewTimeline(favourite.id)"
+                class="text-sm px-3 py-1 bg-primary-100 text-primary-700 rounded-md hover:bg-primary-200 transition-colors font-medium">
+                View Timeline
+              </button>
+              <button 
+                v-else
+                @click="startProgressTracking(favourite.id)"
+                :disabled="initializingProgress.has(favourite.id)"
+                class="text-sm px-3 py-1 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-all font-medium flex items-center gap-1 shadow-md">
+                <component :is="initializingProgress.has(favourite.id) ? Loader2 : TrendingUp" 
+                           :class="['w-3 h-3', initializingProgress.has(favourite.id) ? 'animate-spin' : '']" />
+                Start Progress Tracking
+              </button>
+            </div>
+          </div>
+          <p v-if="favourite.progress_percentage === 0" class="text-gray-500 text-xs mt-2">
+            Track your progress through 5 phases: Research, Design, Development, Testing, and Documentation
+          </p>
+        </div>
+
         <!-- Notes Section -->
         <div class="border-t border-gray-200 pt-4">
           <div v-if="editingNotes !== favourite.id">
@@ -177,16 +207,41 @@
         </div>
       </div>
     </div>
+
+    <!-- Timeline Modal -->
+    <div v-if="showingTimeline" 
+         class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in"
+         @click.self="closeTimeline">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden animate-slide-up">
+        <!-- Modal Header -->
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+          <h2 class="text-2xl font-bold text-gray-900">Project Timeline</h2>
+          <button @click="closeTimeline" 
+                  class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Modal Body -->
+        <div class="overflow-y-auto max-h-[calc(90vh-80px)] p-6">
+          <ProjectProgressTracker :project-id="showingTimeline" />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { 
   Heart, Plus, Calendar, Edit3, Trash2, Clock, FileText, 
-  Loader2, Save 
+  Loader2, Save, TrendingUp 
 } from 'lucide-vue-next'
 import { ref, onMounted, defineEmits } from 'vue'
 import favouriteService from '../services/favouriteService.js'
+import progressService from '../services/progressService.js'
+import ProjectProgressTracker from './ProjectProgressTracker.vue'
 
 // Define emits
 const emit = defineEmits(['navigate-home'])
@@ -197,6 +252,8 @@ const editingNotesContent = ref('')
 const editingStatus = ref('saved')
 const savingNotes = ref(false)
 const removingFavourites = ref(new Set())
+const showingTimeline = ref(null)
+const initializingProgress = ref(new Set())
 
 // Load favourites on component mount
 onMounted(async () => {
@@ -206,6 +263,34 @@ onMounted(async () => {
     console.error('Error loading favourites:', error)
   }
 })
+
+// Progress tracking functionality
+const startProgressTracking = async (favouriteId) => {
+  if (!confirm('This will create a timeline with 5 phases to help you track your progress. Continue?')) {
+    return
+  }
+  
+  initializingProgress.value.add(favouriteId)
+  try {
+    await progressService.initializeProgress(favouriteId)
+    showingTimeline.value = favouriteId
+  } catch (error) {
+    console.error('Error initializing progress tracking:', error)
+    alert('Error starting progress tracking: ' + error.message)
+  } finally {
+    initializingProgress.value.delete(favouriteId)
+  }
+}
+
+const viewTimeline = (favouriteId) => {
+  showingTimeline.value = favouriteId
+}
+
+const closeTimeline = () => {
+  showingTimeline.value = null
+  // Refresh favourites to update progress percentage
+  favouriteService.getFavourites()
+}
 
 // Edit notes functionality
 const startEditingNotes = (favourite) => {
