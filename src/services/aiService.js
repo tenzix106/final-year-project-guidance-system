@@ -159,10 +159,21 @@ Make sure the JSON is valid and properly formatted.`
 
     if (!response.ok) {
       const error = await response.json()
+      
+      // Handle content policy violations
+      if (error.error === 'Content policy violation') {
+        throw new Error(error.message || 'Your request contains inappropriate content for academic purposes.')
+      }
+      
       throw new Error(`Gemini API Error: ${error.error || 'Unknown error'}`)
     }
 
     const data = await response.json()
+
+    // Check for content policy block
+    if (data?.promptFeedback?.blockReason) {
+      throw new Error('Your request was blocked due to safety concerns. Please ensure your input is appropriate for academic purposes.')
+    }
 
     // Validate candidates exist
     if (!data || !Array.isArray(data.candidates) || data.candidates.length === 0) {

@@ -190,6 +190,56 @@ class ProgressService {
     }
   }
 
+  async customizeTimeline(savedProjectId, projectData) {
+    try {
+      if (!authService.authenticated) {
+        throw new Error('Not authenticated')
+      }
+
+      // Call the Express backend proxy for AI generation
+      const response = await fetch(
+        'http://localhost:3001/api/generate-custom-timeline',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...authService.getAuthHeaders()
+          },
+          body: JSON.stringify({
+            saved_project_id: savedProjectId,
+            project_title: projectData.projectTitle,
+            project_description: projectData.projectDescription,
+            custom_requirements: projectData.customRequirements
+          })
+        }
+      )
+
+      if (!response.ok) {
+        const error = await response.json()
+        
+        // Handle content policy violations with clear message
+        if (error.error === 'Content policy violation') {
+          throw new Error(error.message || 'Your project contains inappropriate content for academic purposes.')
+        }
+        
+        throw new Error(error.message || 'Failed to generate custom timeline')
+      }
+
+      const data = await response.json()
+      
+      // Refresh current progress
+      if (savedProjectId === this.currentProgress.value?.saved_project_id) {
+        await this.getProgress(savedProjectId)
+      }
+      
+      return data
+
+    } catch (error) {
+      console.error('Customize timeline error:', error)
+      throw error
+    }
+  }
+
   getPhaseStatusColor(status) {
     const colors = {
       'not_started': 'gray',

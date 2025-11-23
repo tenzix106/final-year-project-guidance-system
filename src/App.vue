@@ -9,8 +9,7 @@
               <GraduationCap class="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 class="text-2xl font-bold text-primary-600">FYP Guidance</h1>
-              <p class="text-sm text-secondary-600">Research & Topic Generator</p>
+              <h1 class="text-2xl font-bold text-primary-600">fip.</h1>
             </div>
           </div>
           

@@ -226,7 +226,9 @@
         
         <!-- Modal Body -->
         <div class="overflow-y-auto max-h-[calc(90vh-80px)] p-6">
-          <ProjectProgressTracker :project-id="showingTimeline" />
+          <ProjectProgressTracker 
+            :project-id="showingTimeline" 
+            :project-info="getProjectInfo(showingTimeline)" />
         </div>
       </div>
     </div>
@@ -290,6 +292,19 @@ const closeTimeline = () => {
   showingTimeline.value = null
   // Refresh favourites to update progress percentage
   favouriteService.getFavourites()
+}
+
+// Get project info for timeline customization
+const getProjectInfo = (favouriteId) => {
+  if (!favouriteId) return null
+  
+  const favourite = favouriteService.favourites.value.find(f => f.id === favouriteId)
+  if (!favourite || !favourite.project_topic) return null
+  
+  return {
+    title: favourite.custom_title || favourite.project_topic.title,
+    description: favourite.project_topic.description
+  }
 }
 
 // Edit notes functionality

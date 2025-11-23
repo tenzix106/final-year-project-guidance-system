@@ -240,8 +240,21 @@ def update_phase(phase_id):
         # Update phase fields
         if 'status' in data:
             phase.status = data['status']
-            if data['status'] == 'completed' and not phase.actual_completion_date:
-                phase.actual_completion_date = datetime.utcnow()
+            if data['status'] == 'completed':
+                if not phase.actual_completion_date:
+                    phase.actual_completion_date = datetime.utcnow()
+                # Mark all tasks as completed and set progress to 100%
+                phase.progress_percentage = 100
+                for task in phase.tasks.all():
+                    if not task.is_completed:
+                        task.is_completed = True
+                        task.completed_at = datetime.utcnow()
+            elif data['status'] == 'not_started':
+                # Reset all tasks when resetting phase
+                for task in phase.tasks.all():
+                    task.is_completed = False
+                    task.completed_at = None
+                phase.progress_percentage = 0
         
         if 'notes' in data:
             phase.notes = data['notes']
@@ -252,11 +265,12 @@ def update_phase(phase_id):
         if 'end_date' in data:
             phase.end_date = datetime.fromisoformat(data['end_date'].replace('Z', '+00:00'))
         
-        # Calculate phase progress from tasks
-        total_tasks = phase.tasks.count()
-        if total_tasks > 0:
-            completed = phase.tasks.filter_by(is_completed=True).count()
-            phase.progress_percentage = int((completed / total_tasks * 100))
+        # Calculate phase progress from tasks (only if status wasn't explicitly set to completed/not_started)
+        if 'status' not in data or data['status'] not in ['completed', 'not_started']:
+            total_tasks = phase.tasks.count()
+            if total_tasks > 0:
+                completed = phase.tasks.filter_by(is_completed=True).count()
+                phase.progress_percentage = int((completed / total_tasks * 100))
         
         db.session.commit()
         
@@ -412,6 +426,86 @@ def delete_task(task_id):
             db.session.commit()
         
         return jsonify({'message': 'Task deleted'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@progress_bp.route('/customize/<int:saved_project_id>', methods=['POST'])
+@jwt_required()
+def customize_timeline(saved_project_id):
+    """Replace default phases with AI-generated custom timeline"""
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        
+        # Verify user owns this project
+        saved_project = SavedProject.query.filter_by(
+            id=saved_project_id,
+            user_id=user_id
+        ).first()
+        
+        if not saved_project:
+            return jsonify({'error': 'Project not found'}), 404
+        
+        phases_data = data.get('phases', [])
+        if not phases_data:
+            return jsonify({'error': 'No phases provided'}), 400
+        
+        # Delete existing phases and tasks
+        ProjectPhase.query.filter_by(saved_project_id=saved_project_id).delete()
+        db.session.commit()
+        
+        # Create new custom phases
+        start_date = datetime.utcnow()
+        current_date = start_date
+        created_phases = []
+        
+        for idx, phase_data in enumerate(phases_data):
+            # Calculate dates
+            duration_weeks = phase_data.get('duration_weeks', 2)
+            end_date = current_date + timedelta(weeks=duration_weeks)
+            
+            # Create phase
+            phase = ProjectPhase(
+                saved_project_id=saved_project_id,
+                phase_name=phase_data['name'],
+                phase_order=idx + 1,
+                description=phase_data.get('description', ''),
+                estimated_duration_weeks=duration_weeks,
+                start_date=current_date,
+                end_date=end_date,
+                status='not_started'
+            )
+            
+            db.session.add(phase)
+            db.session.flush()  # Get phase ID
+            
+            # Add tasks for this phase
+            tasks = phase_data.get('tasks', [])
+            for task_idx, task_name in enumerate(tasks):
+                task = PhaseTask(
+                    phase_id=phase.id,
+                    task_name=task_name,
+                    task_order=task_idx + 1,
+                    is_completed=False
+                )
+                db.session.add(task)
+            
+            created_phases.append(phase)
+            current_date = end_date
+        
+        # Update project status
+        saved_project.status = 'not_started'
+        
+        db.session.commit()
+        
+        # Return the new phases
+        return jsonify({
+            'message': 'Custom timeline created',
+            'phases': [phase.to_dict() for phase in created_phases]
+        }), 201
         
     except Exception as e:
         db.session.rollback()

@@ -3,13 +3,25 @@
     <!-- Header Section -->
     <div class="tracker-header">
       <div class="flex items-start justify-between">
-        <div>
-          <h2 class="text-2xl font-bold text-gray-800 mb-2">Project Timeline</h2>
-          <p class="text-gray-600">Track your progress through each phase of development</p>
+        <div class="flex-1">
+          <h2 class="text-2xl font-bold text-white mb-2">Project Timeline</h2>
+          <p class="text-white text-opacity-90">Track your progress through each phase of development</p>
         </div>
-        <div class="text-right">
-          <div class="text-3xl font-bold text-primary-600">{{ overallProgress }}%</div>
-          <div class="text-sm text-gray-500">Overall Progress</div>
+        <div class="flex items-center gap-4">
+          <button
+            v-if="!isCustomizing"
+            @click="startCustomizeTimeline"
+            class="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg font-medium transition-all flex items-center gap-2 backdrop-blur-sm"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            Customize with AI
+          </button>
+          <div class="text-right">
+            <div class="text-3xl font-bold text-white">{{ overallProgress }}%</div>
+            <div class="text-sm text-white text-opacity-80">Overall Progress</div>
+          </div>
         </div>
       </div>
       
@@ -195,6 +207,82 @@
       <h3 class="text-xl font-semibold text-gray-700 mb-2">No Timeline Yet</h3>
       <p class="text-gray-500">Progress tracking hasn't been initialized for this project.</p>
     </div>
+
+    <!-- AI Customization Modal -->
+    <div v-if="isCustomizing" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in" @click.self="cancelCustomization">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-slide-up">
+        <!-- Modal Header -->
+        <div class="bg-primary-500 text-white p-6">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-2xl font-bold">Customize Timeline with AI</h3>
+            <button @click="cancelCustomization" class="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <p class="text-white text-opacity-90">Let AI create a personalized timeline for your specific project needs</p>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+          <!-- Project Info Display -->
+          <div v-if="projectInfo" class="mb-6 p-4 bg-accent-50 border border-secondary-200 rounded-lg">
+            <h4 class="font-semibold text-gray-800 mb-2">Project: {{ projectInfo.title }}</h4>
+            <p class="text-sm text-gray-600">{{ projectInfo.description }}</p>
+          </div>
+
+          <!-- Error Message -->
+          <div v-if="customizationError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {{ customizationError }}
+          </div>
+
+          <!-- Input Form -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Describe your project focus and any specific requirements
+              </label>
+              <textarea
+                v-model="customizationPrompt"
+                rows="6"
+                class="w-full px-4 py-3 border-2 border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                placeholder="Example: Focus on machine learning with datasets. Need extra time for data preprocessing and model training. Include phases for research paper writing and presentation preparation."
+                :disabled="customizationLoading"
+              ></textarea>
+              <p class="mt-2 text-xs text-gray-500">
+                AI will generate phases and tasks tailored to your project based on this description.
+              </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end gap-3">
+              <button
+                @click="cancelCustomization"
+                class="px-4 py-2 border-2 border-secondary-300 text-secondary-700 rounded-lg hover:bg-accent-50 transition-colors font-medium"
+                :disabled="customizationLoading"
+              >
+                Cancel
+              </button>
+              <button
+                @click="generateCustomTimeline"
+                :disabled="!customizationPrompt.trim() || customizationLoading"
+                class="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg v-if="customizationLoading" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                {{ customizationLoading ? 'Generating...' : 'Generate Timeline' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -206,6 +294,10 @@ const props = defineProps({
   projectId: {
     type: Number,
     required: true
+  },
+  projectInfo: {
+    type: Object,
+    default: null
   }
 });
 
@@ -216,6 +308,10 @@ const error = ref(null);
 const expandedPhases = ref(new Set());
 const addingTaskToPhase = ref(null);
 const newTaskTitle = ref('');
+const isCustomizing = ref(false);
+const customizationPrompt = ref('');
+const customizationLoading = ref(false);
+const customizationError = ref('');
 
 // Computed
 const overallProgress = computed(() => {
@@ -259,6 +355,52 @@ const updatePhaseStatus = async (phaseId, newStatus) => {
   } catch (err) {
     console.error('Error updating phase status:', err);
     error.value = 'Failed to update phase status';
+  }
+};
+
+// AI Customization methods
+const startCustomizeTimeline = () => {
+  isCustomizing.value = true;
+  customizationPrompt.value = '';
+  customizationError.value = '';
+};
+
+const cancelCustomization = () => {
+  isCustomizing.value = false;
+  customizationPrompt.value = '';
+  customizationError.value = '';
+  customizationLoading.value = false;
+};
+
+const generateCustomTimeline = async () => {
+  if (!props.projectInfo) {
+    customizationError.value = 'Project information is required for customization';
+    return;
+  }
+
+  customizationLoading.value = true;
+  customizationError.value = '';
+
+  try {
+    // Call the AI service to generate custom timeline
+    const customTimeline = await progressService.customizeTimeline(
+      props.projectId,
+      {
+        projectTitle: props.projectInfo.title,
+        projectDescription: props.projectInfo.description,
+        customRequirements: customizationPrompt.value.trim()
+      }
+    );
+
+    // Reload progress to show new custom phases
+    await loadProgress();
+    
+    // Close modal
+    cancelCustomization();
+  } catch (err) {
+    console.error('Error generating custom timeline:', err);
+    customizationError.value = err.message || 'Failed to generate custom timeline. Please try again.';
+    customizationLoading.value = false;
   }
 };
 
