@@ -117,6 +117,38 @@
           </div>
         </div>
 
+        <!-- Research Papers Section -->
+        <div class="border-t border-gray-200 pt-4 mb-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-sm font-medium text-gray-700 flex items-center">
+              <BookOpen class="w-4 h-4 mr-2" />
+              Literature Review
+            </h4>
+            <div class="flex gap-2">
+              <button 
+                @click="toggleResearchPapers(favourite.id)"
+                :disabled="loadingPapers.has(favourite.id)"
+                class="text-sm px-3 py-1 rounded-md transition-all font-medium flex items-center gap-1"
+                :class="researchPapers.has(favourite.id) 
+                  ? 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200' 
+                  : 'bg-primary-500 text-white hover:bg-primary-600 shadow-md'">
+                <component :is="loadingPapers.has(favourite.id) ? Loader2 : BookOpen" 
+                           :class="['w-3 h-3', loadingPapers.has(favourite.id) ? 'animate-spin' : '']" />
+                {{ researchPapers.has(favourite.id) ? 'View Papers' : 'Find Research Papers' }}
+              </button>
+            </div>
+          </div>
+          <p v-if="!researchPapers.has(favourite.id)" class="text-gray-500 text-xs mt-2">
+            Get AI-curated academic papers for your literature review
+          </p>
+          <p v-else class="text-secondary-600 text-xs mt-2">
+            ✓ {{ researchPapers.get(favourite.id).length }} papers retrieved
+          </p>
+          <p v-if="papersError.has(favourite.id)" class="text-red-600 text-xs mt-2">
+            {{ papersError.get(favourite.id) }}
+          </p>
+        </div>
+
         <!-- Progress Tracking Section -->
         <div class="border-t border-gray-200 pt-4 mb-4">
           <div class="flex items-center justify-between">
@@ -208,9 +240,100 @@
       </div>
     </div>
 
+    <!-- Research Papers Modal -->
+    <div v-if="showingPapers" 
+         class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+         @click.self="closePapers">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden animate-slide-up">
+        <!-- Modal Header -->
+        <div class="sticky top-0 bg-secondary-500 text-white px-6 py-4 flex items-center justify-between z-10">
+          <div>
+            <h2 class="text-2xl font-bold">Research Papers</h2>
+            <p class="text-sm text-white text-opacity-90 mt-1">Literature review for your project</p>
+          </div>
+          <button @click="closePapers" 
+                  class="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Modal Body -->
+        <div class="overflow-y-auto max-h-[calc(90vh-100px)] p-6">
+          <div v-if="researchPapers.has(showingPapers)" class="space-y-4">
+            <div v-for="paper in researchPapers.get(showingPapers)" :key="paper.id"
+                 class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <!-- Paper Header -->
+              <div class="flex items-start justify-between mb-2">
+                <h3 class="text-lg font-semibold text-gray-900 flex-1 mr-4">
+                  {{ paper.title }}
+                </h3>
+                <a v-if="paper.url && paper.url !== '#'" 
+                   :href="paper.url" 
+                   target="_blank" 
+                   class="text-primary-600 hover:text-primary-800 flex-shrink-0">
+                  <ExternalLink class="w-5 h-5" />
+                </a>
+              </div>
+              
+              <!-- Paper Metadata -->
+              <div class="flex flex-wrap gap-3 mb-3 text-sm text-gray-600">
+                <span class="flex items-center">
+                  <FileText class="w-4 h-4 mr-1" />
+                  {{ paper.authors }}
+                </span>
+                <span class="flex items-center">
+                  <Calendar class="w-4 h-4 mr-1" />
+                  {{ paper.year }}
+                </span>
+                <span v-if="paper.citations > 0" class="flex items-center">
+                  <BookOpen class="w-4 h-4 mr-1" />
+                  {{ paper.citations }} citations
+                </span>
+              </div>
+              
+              <!-- Paper Source -->
+              <div class="text-sm text-gray-500 mb-3">
+                <span class="font-medium">Source:</span> {{ paper.source }}
+              </div>
+              
+              <!-- Paper Abstract -->
+              <p class="text-gray-700 text-sm leading-relaxed">
+                {{ paper.abstract }}
+              </p>
+              
+              <!-- Paper Actions -->
+              <div class="mt-3 flex gap-2">
+                <a v-if="paper.doi" 
+                   :href="`https://doi.org/${paper.doi}`" 
+                   target="_blank"
+                   class="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
+                  DOI: {{ paper.doi }}
+                </a>
+                <a v-if="paper.pdf_url" 
+                   :href="paper.pdf_url" 
+                   target="_blank"
+                   class="text-xs px-3 py-1 bg-primary-100 text-primary-700 rounded-md hover:bg-primary-200 transition-colors flex items-center gap-1">
+                  <FileDown class="w-3 h-3" />
+                  Download PDF
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Empty State -->
+          <div v-else class="text-center py-12">
+            <BookOpen class="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p class="text-gray-500">No papers found</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Timeline Modal -->
     <div v-if="showingTimeline" 
-         class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in"
+         class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
          @click.self="closeTimeline">
       <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden animate-slide-up">
         <!-- Modal Header -->
@@ -238,11 +361,12 @@
 <script setup>
 import { 
   Heart, Plus, Calendar, Edit3, Trash2, Clock, FileText, 
-  Loader2, Save, TrendingUp 
+  Loader2, Save, TrendingUp, BookOpen, ExternalLink, FileDown 
 } from 'lucide-vue-next'
 import { ref, onMounted, defineEmits } from 'vue'
 import favouriteService from '../services/favouriteService.js'
 import progressService from '../services/progressService.js'
+import scholarService from '../services/scholarService.js'
 import ProjectProgressTracker from './ProjectProgressTracker.vue'
 
 // Define emits
@@ -256,6 +380,12 @@ const savingNotes = ref(false)
 const removingFavourites = ref(new Set())
 const showingTimeline = ref(null)
 const initializingProgress = ref(new Set())
+
+// Research papers state
+const researchPapers = ref(new Map()) // Map of favouriteId -> papers array
+const loadingPapers = ref(new Set()) // Set of favouriteIds currently loading
+const showingPapers = ref(null) // Currently viewing papers for this favouriteId
+const papersError = ref(new Map()) // Map of favouriteId -> error message
 
 // Load favourites on component mount
 onMounted(async () => {
@@ -292,6 +422,49 @@ const closeTimeline = () => {
   showingTimeline.value = null
   // Refresh favourites to update progress percentage
   favouriteService.getFavourites()
+}
+
+// Research papers functionality
+const toggleResearchPapers = async (favouriteId) => {
+  // If papers already retrieved, just show them
+  if (researchPapers.value.has(favouriteId)) {
+    showingPapers.value = favouriteId
+    return
+  }
+  
+  // Otherwise, fetch papers (only once to save credits)
+  await fetchResearchPapers(favouriteId)
+}
+
+const fetchResearchPapers = async (favouriteId) => {
+  loadingPapers.value.add(favouriteId)
+  papersError.value.delete(favouriteId)
+  
+  try {
+    const favourite = favouriteService.favourites.value.find(f => f.id === favouriteId)
+    if (!favourite) {
+      throw new Error('Project not found')
+    }
+    
+    const projectTitle = favourite.custom_title || favourite.project_topic?.title || 'Untitled'
+    const projectDescription = favourite.project_topic?.description || ''
+    
+    // Always use searchPapers - it handles API vs mock data internally
+    const papers = await scholarService.searchPapers(projectTitle, projectDescription, 5)
+    
+    researchPapers.value.set(favouriteId, papers)
+    showingPapers.value = favouriteId
+    
+  } catch (error) {
+    console.error('Error fetching research papers:', error)
+    papersError.value.set(favouriteId, error.message || 'Failed to fetch papers')
+  } finally {
+    loadingPapers.value.delete(favouriteId)
+  }
+}
+
+const closePapers = () => {
+  showingPapers.value = null
 }
 
 // Get project info for timeline customization

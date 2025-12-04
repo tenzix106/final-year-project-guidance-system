@@ -353,6 +353,190 @@ Ensure the JSON is valid with no trailing commas. Output ONLY the JSON array.`;
   }
 });
 
+// Test endpoint for ScholarAI
+app.get('/api/test-scholarai', async (req, res) => {
+  try {
+    const apiKey = process.env.SCHOLARAI_API_KEY;
+
+    if (!apiKey) {
+      return res.json({ 
+        status: 'error',
+        message: 'ScholarAI API key not configured'
+      });
+    }
+
+    // Try different parameter combinations
+    const testQueries = [
+      // Test 1: Minimal parameters
+      {
+        name: 'Test 1: Minimal',
+        params: new URLSearchParams({
+          query: 'deep learning'
+        })
+      },
+      // Test 2: With sort
+      {
+        name: 'Test 2: With sort',
+        params: new URLSearchParams({
+          query: 'neural networks',
+          sort: 'relevance'
+        })
+      },
+      // Test 3: Original format
+      {
+        name: 'Test 3: Full params',
+        params: new URLSearchParams({
+          query: 'artificial intelligence',
+          sort: 'cited_by_count',
+          peer_reviewed_only: 'true',
+          offset: '0'
+        })
+      }
+    ];
+
+    const results = [];
+
+    for (const test of testQueries) {
+      const apiUrl = `https://api.scholarai.io/api/abstracts?${test.params.toString()}`;
+      console.log(`${test.name} - URL:`, apiUrl);
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'x-scholarai-api-key': apiKey
+        }
+      });
+
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        data = responseText;
+      }
+
+      results.push({
+        test: test.name,
+        status: response.status,
+        paperCount: Array.isArray(data) ? data.length : 0,
+        response: Array.isArray(data) && data.length > 0 ? {
+          firstPaper: data[0].title
+        } : (typeof data === 'string' ? data.substring(0, 200) : data)
+      });
+    }
+
+    return res.json({
+      status: 'testing',
+      message: 'Tested multiple query formats',
+      results: results
+    });
+
+  } catch (error) {
+    console.error('ScholarAI test error:', error);
+    return res.json({
+      status: 'error',
+      message: error.message
+    });
+  }
+});
+
+// ScholarAI proxy endpoint
+app.post('/api/search-papers', async (req, res) => {
+  try {
+    const { query, limit = 5 } = req.body;
+    const apiKey = process.env.SCHOLARAI_API_KEY;
+
+    if (!apiKey) {
+      console.log('ScholarAI API key not configured, returning mock flag');
+      return res.status(200).json({ 
+        error: 'ScholarAI API key not configured on server',
+        useMock: true 
+      });
+    }
+
+    // Extract key technical terms for better search
+    const stopWords = ['about', 'using', 'with', 'from', 'that', 'this', 'will', 'your', 'have', 'more', 'when', 'what', 'where', 'develop', 'system', 'project', 'application'];
+    const keywords = query
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(word => word.length > 3 && !stopWords.includes(word))
+      .slice(0, 5)
+      .join(' ');
+
+    const finalQuery = keywords || query;
+
+    const params = new URLSearchParams({
+      query: finalQuery,
+      sort: 'cited_by_count',
+      peer_reviewed_only: 'true',
+      offset: '0'
+    });
+
+    const apiUrl = `https://api.scholarai.io/api/abstracts?${params.toString()}`;
+    console.log('ScholarAI API request with query:', finalQuery);
+
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'x-scholarai-api-key': apiKey
+      }
+    });
+
+    console.log('ScholarAI API response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('ScholarAI API error:', response.status, errorText);
+      
+      return res.status(200).json({ 
+        error: 'API error',
+        useMock: true 
+      });
+    }
+
+    const data = await response.json();
+    
+    // ScholarAI returns: { paper_data: [...], total_num_results: N, next_offset: M }
+    const papers = data.paper_data || [];
+    console.log('ScholarAI API returned:', papers.length, 'papers out of', data.total_num_results || 0, 'total');
+    
+    if (papers.length === 0) {
+      console.log('No papers found, using mock data fallback');
+      return res.status(200).json({ 
+        error: 'No papers found for this query',
+        useMock: true 
+      });
+    }
+    
+    // Transform ScholarAI format to our expected format
+    const transformedPapers = papers.slice(0, limit).map(paper => ({
+      title: paper.title || 'Untitled Paper',
+      abstract: paper.answer || 'No abstract available',
+      authors: paper.creators || [],
+      publication_date: paper.publicationDate || 'N/A',
+      cited_by_count: 0,
+      url: paper.landing_page_url || '#',
+      ss_id: paper.ss_id || null,
+      doi: paper.doi || null,
+      pdf_url: paper.pdf_id ? paper.pdf_id.replace('PDF_URL:', '') : null
+    }));
+    
+    res.json({ 
+      results: transformedPapers,
+      totalResults: data.total_num_results || papers.length
+    });
+
+  } catch (error) {
+    console.error('ScholarAI proxy error:', error);
+    res.status(200).json({ 
+      error: 'Failed to search papers',
+      details: error.message,
+      useMock: true 
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Proxy server running on http://localhost:${PORT}`);
 });
