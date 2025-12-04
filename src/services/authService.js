@@ -17,6 +17,29 @@ class AuthService {
   }
 
   async initializeAuth() {
+    // Check for OAuth callback token in URL
+    const urlParams = new URLSearchParams(window.location.search)
+    const oauthToken = urlParams.get('token')
+    const oauthError = urlParams.get('error')
+    
+    if (oauthToken) {
+      // Store OAuth token and fetch user
+      authToken.value = oauthToken
+      localStorage.setItem('auth_token', oauthToken)
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname)
+      await this.fetchCurrentUser()
+      return
+    }
+    
+    if (oauthError) {
+      // Clean URL and show error
+      window.history.replaceState({}, document.title, window.location.pathname)
+      console.error('OAuth error:', oauthError)
+      return
+    }
+    
+    // Regular token restoration
     const token = localStorage.getItem('auth_token')
     if (token) {
       authToken.value = token

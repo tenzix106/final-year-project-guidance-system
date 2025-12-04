@@ -7,8 +7,12 @@ from sqlalchemy import Text
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=True)  # Nullable for OAuth users
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # OAuth fields
+    google_id = db.Column(db.String(255), unique=True, nullable=True, index=True)
+    auth_provider = db.Column(db.String(20), default='email', nullable=False)  # 'email' or 'google'
     
     # Additional user profile fields
     full_name = db.Column(db.String(255), nullable=True)
@@ -25,6 +29,8 @@ class User(db.Model):
         self.password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
 
     def check_password(self, password: str) -> bool:
+        if not self.password_hash:
+            return False
         return bcrypt.check_password_hash(self.password_hash, password)
 
 

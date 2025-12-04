@@ -20,7 +20,7 @@ class ScholarService {
    * @param {number} limit - Number of papers to retrieve (default: 5)
    * @returns {Promise<Array>} Array of research papers
    */
-  async searchPapers(projectTitle, projectDescription, limit = 5) {
+  async searchPapers(projectTitle, projectDescription, limit = 10) {
     try {
       // Build search query from project details
       const searchQuery = `${projectTitle} ${projectDescription}`.trim()

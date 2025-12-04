@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 from .config import Config
 from .extensions import db, migrate, bcrypt, jwt, cors
-from .auth.routes import auth_bp
+from .auth.routes import auth_bp, init_oauth
 from .favourites.routes import favourites_bp
 from .progress import progress_bp
 from . import models  # ensure models are registered for migrations
@@ -25,6 +25,9 @@ def create_app() -> Flask:
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     jwt.init_app(app)
+    
+    # Initialize OAuth
+    init_oauth(app)
     
     # Configure CORS with proper settings
     cors.init_app(
