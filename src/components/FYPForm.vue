@@ -19,12 +19,12 @@
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Student ID</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">University/Institution</label>
           <input
             v-model="formData.studentId"
             type="text"
             class="input-field"
-            placeholder="Enter your student ID"
+            placeholder="e.g., Stanford University, MIT, Oxford"
             required
           />
         </div>

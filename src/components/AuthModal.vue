@@ -346,13 +346,16 @@ const handleRegister = async () => {
   
   try {
     await authService.register(registerForm.value.email, registerForm.value.password)
-    success.value = 'Account created successfully! You can now sign in.'
     
-    // Switch to login mode after successful registration
+    // Log in the user automatically after registration
+    await authService.login(registerForm.value.email, registerForm.value.password)
+    
+    success.value = 'Account created successfully!'
+    
     setTimeout(() => {
-      setMode(true)
-      loginForm.value.email = registerForm.value.email
-    }, 1500)
+      emit('success', 'register')
+      closeModal()
+    }, 1000)
     
   } catch (err) {
     error.value = err.message || 'Registration failed. Please try again.'

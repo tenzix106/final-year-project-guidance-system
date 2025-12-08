@@ -138,6 +138,65 @@ class AuthService {
     localStorage.removeItem('auth_token')
   }
 
+  async completeOnboarding() {
+    if (!authToken.value) {
+      throw new Error('Not authenticated')
+    }
+    
+    try {
+      const resp = await fetch(`${API_BASE_URL}/api/auth/complete-onboarding`, {
+        method: 'POST',
+        headers: this.getAuthHeaders()
+      })
+      
+      if (!resp.ok) {
+        const err = await this.safeJson(resp)
+        throw new Error(err?.message || 'Failed to complete onboarding')
+      }
+      
+      // Update local user state
+      if (currentUser.value) {
+        currentUser.value.onboarding_completed = true
+      }
+      
+      return await resp.json()
+    } catch (error) {
+      console.error('Complete onboarding error:', error)
+      throw error
+    }
+  }
+
+  async updateProfile(profileData) {
+    if (!authToken.value) {
+      throw new Error('Not authenticated')
+    }
+    
+    try {
+      const resp = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(profileData)
+      })
+      
+      if (!resp.ok) {
+        const err = await this.safeJson(resp)
+        throw new Error(err?.message || 'Failed to update profile')
+      }
+      
+      const data = await resp.json()
+      
+      // Update local user state with new data
+      if (data.user) {
+        currentUser.value = data.user
+      }
+      
+      return data
+    } catch (error) {
+      console.error('Update profile error:', error)
+      throw error
+    }
+  }
+
   async safeJson(resp) {
     try { 
       return await resp.json() 

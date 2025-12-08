@@ -14,9 +14,12 @@ class User(db.Model):
     google_id = db.Column(db.String(255), unique=True, nullable=True, index=True)
     auth_provider = db.Column(db.String(20), default='email', nullable=False)  # 'email' or 'google'
     
+    # Onboarding
+    onboarding_completed = db.Column(db.Boolean, default=False, nullable=False)
+    
     # Additional user profile fields
     full_name = db.Column(db.String(255), nullable=True)
-    student_id = db.Column(db.String(50), nullable=True, index=True)
+    university = db.Column(db.String(255), nullable=True)
     program = db.Column(db.String(100), nullable=True)
     academic_year = db.Column(db.String(10), nullable=True)
     

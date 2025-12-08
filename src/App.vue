@@ -30,20 +30,46 @@
             <!-- Auth Section -->
             <div class="flex items-center space-x-3">
               <!-- Authenticated User -->
-              <div v-if="isAuthenticated" class="flex items-center space-x-3">
-                <div class="flex items-center space-x-2 text-sm">
+              <div v-if="isAuthenticated" class="relative">
+                <button 
+                  @click="toggleUserDropdown"
+                  class="flex items-center space-x-2 text-sm hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors"
+                >
                   <div class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center">
                     <User class="w-4 h-4" />
                   </div>
                   <span class="text-gray-700 font-medium">{{ currentUser?.email }}</span>
-                </div>
-                <button 
-                  @click="handleLogout"
-                  class="text-gray-600 hover:text-gray-800 transition-colors flex items-center space-x-1"
-                >
-                  <LogOut class="w-4 h-4" />
-                  <span class="hidden sm:inline">Logout</span>
+                  <ChevronDown class="w-4 h-4 text-gray-400" :class="{ 'rotate-180': userDropdownOpen }" />
                 </button>
+
+                <!-- Dropdown Menu -->
+                <transition name="dropdown">
+                  <div v-if="userDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                    <div class="px-4 py-3 border-b border-gray-100">
+                      <p class="text-xs text-gray-500">Signed in as</p>
+                      <p class="text-sm font-medium text-gray-900 truncate">{{ currentUser?.email }}</p>
+                      <p class="text-xs text-gray-500 mt-1">
+                        {{ currentUser?.auth_provider === 'google' ? 'Google Account' : 'Email Account' }}
+                      </p>
+                    </div>
+                    
+                    <button 
+                      @click="openProfileModalFromDropdown"
+                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    >
+                      <Settings class="w-4 h-4" />
+                      <span>Edit Profile</span>
+                    </button>
+                    
+                    <button 
+                      @click="handleLogoutFromDropdown"
+                      class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2 transition-colors"
+                    >
+                      <LogOut class="w-4 h-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </transition>
               </div>
 
               <!-- Not Authenticated -->
@@ -94,7 +120,7 @@
     <!-- Main Content -->
     <main v-if="activeView === 'home'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
       <!-- AI Status Banner -->
-      <div v-if="aiStatus.provider" class="mb-8">
+      <!-- <div v-if="aiStatus.provider" class="mb-8">
         <div class="card max-w-4xl mx-auto">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
@@ -119,7 +145,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- Form Section -->
       <section id="form" class="mb-20">
@@ -206,17 +232,32 @@
       @close="closeAuthModal"
       @success="handleAuthSuccess"
     />
+
+    <!-- Onboarding Modal -->
+    <OnboardingModal
+      :is-open="onboardingModalOpen"
+      @complete="handleOnboardingComplete"
+    />
+
+    <!-- Profile Modal -->
+    <ProfileModal
+      :is-open="profileModalOpen"
+      @close="closeProfileModal"
+      @updated="handleProfileUpdated"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { GraduationCap, Sparkles, BookOpen, AlertCircle, User, LogOut, Heart } from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { GraduationCap, Sparkles, BookOpen, AlertCircle, User, LogOut, Heart, Settings, ChevronDown } from 'lucide-vue-next'
 import FYPForm from './components/FYPForm.vue'
 import FYPResults from './components/FYPResults.vue'
 import FYPResources from './components/FYPResources.vue'
 import AISetupGuide from './components/AISetupGuide.vue'
 import AuthModal from './components/AuthModal.vue'
+import OnboardingModal from './components/OnboardingModal.vue'
+import ProfileModal from './components/ProfileModal.vue'
 import FavouritesPage from './components/FavouritesPage.vue'
 import aiService from './services/aiService.js'
 import authService, { isAuthenticated, currentUser } from './services/authService.js'
@@ -230,6 +271,15 @@ const useAI = ref(false)
 // Auth state
 const authModalOpen = ref(false)
 const authModalMode = ref('login')
+
+// Onboarding state
+const onboardingModalOpen = ref(false)
+
+// Profile state
+const profileModalOpen = ref(false)
+
+// User dropdown state
+const userDropdownOpen = ref(false)
 
 // View state
 const activeView = ref('home')
@@ -277,6 +327,13 @@ const handleGenerateTopics = async (formData) => {
 onMounted(() => {
   aiStatus.value = aiService.getStatus()
   useAI.value = aiService.isConfigured()
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 
 const generateMockTopics = (formData) => {
@@ -474,10 +531,31 @@ const closeAuthModal = () => {
   authModalOpen.value = false
 }
 
-const handleAuthSuccess = (userData) => {
-  console.log('Authentication successful:', userData)
+const handleAuthSuccess = (type) => {
+  console.log('Authentication successful:', type)
   closeAuthModal()
-  // User state is automatically updated by authService reactive state
+  
+  // Check if user needs onboarding (new users who just registered)
+  if (type === 'register' && currentUser.value && !currentUser.value.onboarding_completed) {
+    // Show onboarding after a short delay
+    setTimeout(() => {
+      onboardingModalOpen.value = true
+    }, 500)
+  }
+}
+
+const handleOnboardingComplete = async (skipped) => {
+  onboardingModalOpen.value = false
+  
+  // Mark onboarding as completed in the backend
+  if (isAuthenticated.value) {
+    try {
+      await authService.completeOnboarding()
+      console.log(skipped ? 'Onboarding skipped' : 'Onboarding completed')
+    } catch (error) {
+      console.error('Error completing onboarding:', error)
+    }
+  }
 }
 
 const handleLogout = async () => {
@@ -487,5 +565,36 @@ const handleLogout = async () => {
   } catch (error) {
     console.error('Logout error:', error)
   }
+}
+
+const openProfileModal = () => {
+  profileModalOpen.value = true
+}
+
+const closeProfileModal = () => {
+  profileModalOpen.value = false
+}
+
+const handleProfileUpdated = () => {
+  console.log('Profile updated successfully')
+}
+
+const toggleUserDropdown = (event) => {
+  event.stopPropagation()
+  userDropdownOpen.value = !userDropdownOpen.value
+}
+
+const handleClickOutside = () => {
+  userDropdownOpen.value = false
+}
+
+const openProfileModalFromDropdown = () => {
+  userDropdownOpen.value = false
+  profileModalOpen.value = true
+}
+
+const handleLogoutFromDropdown = async () => {
+  userDropdownOpen.value = false
+  await handleLogout()
 }
 </script>

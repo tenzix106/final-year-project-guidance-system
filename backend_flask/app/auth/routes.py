@@ -129,6 +129,59 @@ def google_callback():
         return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:3000')}?error=oauth_failed")
 
 
+@auth_bp.post("/complete-onboarding")
+@jwt_required()
+def complete_onboarding():
+    """Mark user's onboarding as completed"""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"message": "user not found"}), 404
+    
+    user.onboarding_completed = True
+    db.session.commit()
+    
+    return jsonify({"message": "onboarding completed", "onboarding_completed": True})
+
+
+@auth_bp.put("/profile")
+@jwt_required()
+def update_profile():
+    """Update user profile information"""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"message": "user not found"}), 404
+    
+    data = request.get_json(silent=True) or {}
+    
+    # Update allowed fields
+    if 'full_name' in data:
+        user.full_name = data['full_name'].strip() if data['full_name'] else None
+    if 'university' in data:
+        user.university = data['university'].strip() if data['university'] else None
+    if 'program' in data:
+        user.program = data['program'].strip() if data['program'] else None
+    if 'academic_year' in data:
+        user.academic_year = data['academic_year'].strip() if data['academic_year'] else None
+    
+    db.session.commit()
+    
+    return jsonify({
+        "message": "profile updated successfully",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "university": user.university,
+            "program": user.program,
+            "academic_year": user.academic_year,
+            "auth_provider": user.auth_provider,
+            "onboarding_completed": user.onboarding_completed
+        }
+    })
+
+
 @auth_bp.get("/me")
 @jwt_required()
 def me():
@@ -140,6 +193,10 @@ def me():
         "id": user.id,
         "email": user.email,
         "full_name": user.full_name,
-        "auth_provider": user.auth_provider
+        "university": user.university,
+        "program": user.program,
+        "academic_year": user.academic_year,
+        "auth_provider": user.auth_provider,
+        "onboarding_completed": user.onboarding_completed
     })
 
