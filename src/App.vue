@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-accent-50">
-    <!-- Header -->
-    <header class="bg-white backdrop-blur-md border-b border-secondary-200 sticky top-0 z-50 shadow-sm">
+    <!-- Student/Guest Header -->
+    <header v-if="!isAuthenticated || currentUser?.role === 'student'" class="bg-white backdrop-blur-md border-b border-secondary-200 sticky top-0 z-50 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
           <div class="flex items-center space-x-3">
@@ -54,15 +54,6 @@
                     </div>
                     
                     <button 
-                      v-if="currentUser?.role === 'admin'"
-                      @click="openAdminPanelFromDropdown"
-                      class="w-full text-left px-4 py-2 text-sm text-purple-600 hover:bg-purple-50 flex items-center space-x-2 transition-colors border-b border-gray-100"
-                    >
-                      <Shield class="w-4 h-4" />
-                      <span>Admin Panel</span>
-                    </button>
-                    
-                    <button 
                       @click="openProfileModalFromDropdown"
                       class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 transition-colors"
                     >
@@ -95,6 +86,81 @@
                 >
                   Sign Up
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Admin Header -->
+    <header v-if="isAuthenticated && currentUser?.role === 'admin'" class="bg-white backdrop-blur-md border-b border-secondary-200 sticky top-0 z-50 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center shadow-md">
+              <GraduationCap class="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-primary-600">fip.</h1>
+            </div>
+          </div>
+          
+          <div class="flex items-center space-x-6">
+            <!-- Admin Navigation -->
+            <nav class="hidden md:flex space-x-8">
+              <button @click="setActiveView('home')" :class="activeView === 'home' ? 'text-primary-600 font-semibold' : 'text-gray-600 hover:text-primary-600 transition-colors'">
+                Dashboard
+              </button>
+              <button @click="setActiveView('admin')" :class="activeView === 'admin' ? 'text-primary-600 font-semibold' : 'text-gray-600 hover:text-primary-600 transition-colors'" class="flex items-center space-x-1">
+                <Shield class="w-4 h-4" />
+                <span>Admin Panel</span>
+              </button>
+            </nav>
+
+            <!-- Admin User Section -->
+            <div class="flex items-center space-x-3">
+              <div class="relative">
+                <button 
+                  @click="toggleUserDropdown"
+                  class="flex items-center space-x-2 text-sm hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors"
+                >
+                  <div class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center">
+                    <User class="w-4 h-4" />
+                  </div>
+                  <span class="text-gray-700 font-medium">{{ currentUser?.email }}</span>
+                  <ChevronDown class="w-4 h-4 text-gray-400" :class="{ 'rotate-180': userDropdownOpen }" />
+                </button>
+
+                <!-- Admin Dropdown Menu -->
+                <transition name="dropdown">
+                  <div v-if="userDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                    <div class="px-4 py-3 border-b border-gray-100">
+                      <p class="text-xs text-gray-500">Signed in as</p>
+                      <p class="text-sm font-medium text-gray-900 truncate">{{ currentUser?.email }}</p>
+                      <p class="text-xs text-purple-600 mt-1 flex items-center">
+                        <Shield class="w-3 h-3 mr-1" />
+                        Administrator
+                      </p>
+                    </div>
+                    
+                    <button 
+                      @click="openProfileModalFromDropdown"
+                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    >
+                      <Settings class="w-4 h-4" />
+                      <span>Edit Profile</span>
+                    </button>
+                    
+                    <button 
+                      @click="handleLogoutFromDropdown"
+                      class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2 transition-colors"
+                    >
+                      <LogOut class="w-4 h-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </transition>
               </div>
             </div>
           </div>
@@ -324,9 +390,9 @@
       </section>
 
       <!-- AI Setup Section -->
-      <section id="setup" class="mb-20">
+      <!-- <section id="setup" class="mb-20">
         <AISetupGuide />
-      </section>
+      </section> -->
     </main>
 
     <!-- Favourites Page View -->
@@ -730,6 +796,9 @@ const handleAuthSuccess = (type) => {
   console.log('Authentication successful:', type)
   closeAuthModal()
   
+  // Redirect to home view after authentication
+  setActiveView('home')
+  
   // Check if user needs onboarding (new users who just registered)
   if (type === 'register' && currentUser.value && !currentUser.value.onboarding_completed) {
     // Show onboarding after a short delay
@@ -757,6 +826,8 @@ const handleLogout = async () => {
   try {
     await authService.logout()
     console.log('User logged out successfully')
+    // Redirect to home view after logout
+    setActiveView('home')
   } catch (error) {
     console.error('Logout error:', error)
   }

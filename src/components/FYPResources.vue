@@ -96,7 +96,7 @@
     </div>
 
     <!-- Quick Access Section -->
-    <div class="mt-16">
+    <!-- <div class="mt-16">
       <h4 class="text-2xl font-bold text-gray-900 mb-8 text-center">Quick Access</h4>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <button v-for="quickLink in quickLinks" :key="quickLink.name"
@@ -105,7 +105,7 @@
           <h5 class="font-medium text-gray-900">{{ quickLink.name }}</h5>
         </button>
       </div>
-    </div>
+    </div> -->
 
     <!-- Tips Section -->
     <div class="mt-16 card">
@@ -137,37 +137,37 @@ const academicResources = [
     name: 'Google Scholar',
     description: 'Search across many disciplines and sources for academic papers',
     icon: Search,
-    url: '#'
+    url: 'https://scholar.google.com/'
   },
   {
     name: 'IEEE Xplore',
     description: 'Access to technical literature in engineering and technology',
     icon: FileText,
-    url: '#'
+    url: 'https://scholar.google.com/'
   },
   {
     name: 'JSTOR',
     description: 'Digital library for academic journals, books, and primary sources',
     icon: Database,
-    url: '#'
+    url: 'https://www.jstor.org/'
   },
   {
     name: 'PubMed',
     description: 'Database of biomedical literature and life sciences',
     icon: FileText,
-    url: '#'
+    url: 'https://pubmed.ncbi.nlm.nih.gov/'
   },
   {
     name: 'ResearchGate',
     description: 'Professional network for scientists and researchers',
     icon: Users,
-    url: '#'
+    url: 'https://www.researchgate.net/'
   },
   {
     name: 'ScienceDirect',
     description: 'Full-text scientific database covering all fields of science',
     icon: Database,
-    url: '#'
+    url: 'https://www.sciencedirect.com/'
   }
 ]
 
@@ -176,37 +176,37 @@ const developmentTools = [
     name: 'GitHub',
     description: 'Version control and collaboration platform',
     icon: Github,
-    url: '#'
+    url: 'https://github.com/'
   },
   {
     name: 'VS Code',
     description: 'Popular code editor with extensive extensions',
     icon: Code,
-    url: '#'
+    url: 'https://code.visualstudio.com/'
   },
   {
     name: 'Google Colab',
     description: 'Free cloud-based Jupyter notebook environment',
     icon: Globe,
-    url: '#'
+    url: 'https://colab.research.google.com/'
   },
   {
     name: 'SPSS',
     description: 'Statistical analysis software for social sciences',
     icon: TrendingUp,
-    url: '#'
+    url: 'https://www.ibm.com/products/spss-statistics'
   },
   {
     name: 'Tableau',
     description: 'Data visualization and business intelligence tool',
     icon: Target,
-    url: '#'
+    url: 'https://www.tableau.com/'
   },
   {
     name: 'Mendeley',
     description: 'Reference manager and academic social network',
     icon: BookOpen,
-    url: '#'
+    url: 'https://www.mendeley.com/'
   }
 ]
 
@@ -215,38 +215,38 @@ const learningMaterials = [
     name: 'Coursera',
     description: 'Online courses from top universities and companies',
     icon: PlayCircle,
-    url: '#'
+    url: 'https://www.coursera.org/'
   },
   {
     name: 'edX',
     description: 'Free online courses from leading universities',
     icon: PlayCircle,
-    url: '#'
+    url: 'https://www.edx.org/'
   },
   {
     name: 'Khan Academy',
     description: 'Free educational resources across all subjects',
     icon: BookOpen,
-    url: '#'
+    url: 'https://www.khanacademy.org/'
   },
   {
     name: 'YouTube Education',
     description: 'Free video tutorials and educational content',
     icon: PlayCircle,
-    url: '#'
+    url: 'https://www.youtube.com/channel/UCtFRv9O2AHqOZjjynzrv-xg'
   },
   {
     name: 'Academic Writing Guides',
     description: 'Resources for improving academic writing skills',
     icon: FileText,
-    url: '#'
-  },
-  {
-    name: 'Research Methodology',
-    description: 'Guides for conducting academic research',
-    icon: Target,
-    url: '#'
+    url: 'https://subjectguides.york.ac.uk/academic-writing'
   }
+  // {
+  //   name: 'Research Methodology',
+  //   description: 'Guides for conducting academic research',
+  //   icon: Target,
+  //   url: '#'
+  // }
 ]
 
 const quickLinks = [
