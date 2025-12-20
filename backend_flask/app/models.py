@@ -17,6 +17,9 @@ class User(db.Model):
     # Onboarding
     onboarding_completed = db.Column(db.Boolean, default=False, nullable=False)
     
+    # User role
+    role = db.Column(db.String(20), default='student', nullable=False)  # 'student' or 'admin'
+    
     # Additional user profile fields
     full_name = db.Column(db.String(255), nullable=True)
     university = db.Column(db.String(255), nullable=True)
@@ -35,6 +38,12 @@ class User(db.Model):
         if not self.password_hash:
             return False
         return bcrypt.check_password_hash(self.password_hash, password)
+    
+    def is_admin(self) -> bool:
+        return self.role == 'admin'
+    
+    def is_student(self) -> bool:
+        return self.role == 'student'
 
 
 class StudentProfile(db.Model):

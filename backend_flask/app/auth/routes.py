@@ -134,6 +134,12 @@ def google_callback():
 def complete_onboarding():
     """Mark user's onboarding as completed"""
     user_id = get_jwt_identity()
+    # Convert to int since JWT identity is stored as string
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        return jsonify({"message": "Invalid token"}), 401
+    
     user = User.query.get(user_id)
     if user is None:
         return jsonify({"message": "user not found"}), 404
@@ -149,6 +155,12 @@ def complete_onboarding():
 def update_profile():
     """Update user profile information"""
     user_id = get_jwt_identity()
+    # Convert to int since JWT identity is stored as string
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        return jsonify({"message": "Invalid token"}), 401
+    
     user = User.query.get(user_id)
     if user is None:
         return jsonify({"message": "user not found"}), 404
@@ -177,7 +189,8 @@ def update_profile():
             "program": user.program,
             "academic_year": user.academic_year,
             "auth_provider": user.auth_provider,
-            "onboarding_completed": user.onboarding_completed
+            "onboarding_completed": user.onboarding_completed,
+            "role": user.role
         }
     })
 
@@ -186,6 +199,12 @@ def update_profile():
 @jwt_required()
 def me():
     user_id = get_jwt_identity()
+    # Convert to int since JWT identity is stored as string
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        return jsonify({"message": "Invalid token"}), 401
+    
     user = User.query.get(user_id)
     if user is None:
         return jsonify({"message": "user not found"}), 404
@@ -197,6 +216,7 @@ def me():
         "program": user.program,
         "academic_year": user.academic_year,
         "auth_provider": user.auth_provider,
-        "onboarding_completed": user.onboarding_completed
+        "onboarding_completed": user.onboarding_completed,
+        "role": user.role
     })
 

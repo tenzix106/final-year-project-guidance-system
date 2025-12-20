@@ -54,6 +54,15 @@
                     </div>
                     
                     <button 
+                      v-if="currentUser?.role === 'admin'"
+                      @click="openAdminPanelFromDropdown"
+                      class="w-full text-left px-4 py-2 text-sm text-purple-600 hover:bg-purple-50 flex items-center space-x-2 transition-colors border-b border-gray-100"
+                    >
+                      <Shield class="w-4 h-4" />
+                      <span>Admin Panel</span>
+                    </button>
+                    
+                    <button 
                       @click="openProfileModalFromDropdown"
                       class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 transition-colors"
                     >
@@ -94,7 +103,7 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
+    <section v-if="!isAuthenticated || currentUser?.role === 'student'" class="py-20 px-4 sm:px-6 lg:px-8">
       <div class="max-w-4xl mx-auto text-center">
         <h2 class="text-5xl font-bold text-gray-900 mb-6 animate-fade-in">
           Find Your Perfect
@@ -117,8 +126,146 @@
       </div>
     </section>
 
+    <!-- Admin Hero Section -->
+    <section v-if="isAuthenticated && currentUser?.role === 'admin' && activeView === 'home'" class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-purple-50 to-blue-50">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+          <div class="flex items-center justify-center space-x-3 mb-4">
+            <Shield class="w-16 h-16 text-purple-600" />
+          </div>
+          <h2 class="text-5xl font-bold text-gray-900 mb-4 animate-fade-in">
+            Admin Dashboard
+          </h2>
+          <p class="text-xl text-gray-600 animate-slide-up">
+            Manage the FYP Guidance System - Monitor users, topics, AI settings, and system analytics
+          </p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+          <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-600 font-medium">Total Users</p>
+                <p class="text-3xl font-bold text-gray-900 mt-1">{{ adminQuickStats.users }}</p>
+              </div>
+              <Users class="w-10 h-10 text-blue-500 opacity-80" />
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-600 font-medium">Project Topics</p>
+                <p class="text-3xl font-bold text-gray-900 mt-1">{{ adminQuickStats.topics }}</p>
+              </div>
+              <BookOpen class="w-10 h-10 text-green-500 opacity-80" />
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-600 font-medium">AI Generated</p>
+                <p class="text-3xl font-bold text-gray-900 mt-1">{{ adminQuickStats.generated }}</p>
+              </div>
+              <Sparkles class="w-10 h-10 text-purple-500 opacity-80" />
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-600 font-medium">Active (30d)</p>
+                <p class="text-3xl font-bold text-gray-900 mt-1">{{ adminQuickStats.active }}</p>
+              </div>
+              <Activity class="w-10 h-10 text-orange-500 opacity-80" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Features Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <button
+            @click="setActiveView('admin')"
+            class="bg-white rounded-xl shadow-md p-8 text-left hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-purple-500 group"
+          >
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <LayoutDashboard class="w-7 h-7 text-white" />
+              </div>
+              <h3 class="text-xl font-bold text-gray-900">System Overview</h3>
+            </div>
+            <p class="text-gray-600 text-sm">View comprehensive system statistics, user metrics, and activity trends at a glance</p>
+          </button>
+
+          <button
+            @click="setActiveView('admin')"
+            class="bg-white rounded-xl shadow-md p-8 text-left hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-blue-500 group"
+          >
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Users class="w-7 h-7 text-white" />
+              </div>
+              <h3 class="text-xl font-bold text-gray-900">User Management</h3>
+            </div>
+            <p class="text-gray-600 text-sm">Manage user accounts, assign roles, view user details, and monitor registrations</p>
+          </button>
+
+          <button
+            @click="setActiveView('admin')"
+            class="bg-white rounded-xl shadow-md p-8 text-left hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-green-500 group"
+          >
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <BookOpen class="w-7 h-7 text-white" />
+              </div>
+              <h3 class="text-xl font-bold text-gray-900">Topic Database</h3>
+            </div>
+            <p class="text-gray-600 text-sm">Browse, search, filter and manage all project topics in the database</p>
+          </button>
+
+          <button
+            @click="setActiveView('admin')"
+            class="bg-white rounded-xl shadow-md p-8 text-left hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-indigo-500 group"
+          >
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Settings class="w-7 h-7 text-white" />
+              </div>
+              <h3 class="text-xl font-bold text-gray-900">AI Settings</h3>
+            </div>
+            <p class="text-gray-600 text-sm">Configure AI providers, manage API keys, and set default models for topic generation</p>
+          </button>
+
+          <button
+            @click="setActiveView('admin')"
+            class="bg-white rounded-xl shadow-md p-8 text-left hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-orange-500 group"
+          >
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <BarChart3 class="w-7 h-7 text-white" />
+              </div>
+              <h3 class="text-xl font-bold text-gray-900">Analytics & Reports</h3>
+            </div>
+            <p class="text-gray-600 text-sm">View usage statistics, generation trends, and detailed analytics reports</p>
+          </button>
+
+          <button
+            @click="setActiveView('admin')"
+            class="bg-white rounded-xl shadow-md p-8 text-left hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-red-500 group"
+          >
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Database class="w-7 h-7 text-white" />
+              </div>
+              <h3 class="text-xl font-bold text-gray-900">System Health</h3>
+            </div>
+            <p class="text-gray-600 text-sm">Monitor system performance, database status, and API health metrics</p>
+          </button>
+        </div>
+      </div>
+    </section>
+
     <!-- Main Content -->
-    <main v-if="activeView === 'home'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+    <main v-if="activeView === 'home' && (!isAuthenticated || currentUser?.role === 'student')" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
       <!-- AI Status Banner -->
       <!-- <div v-if="aiStatus.provider" class="mb-8">
         <div class="card max-w-4xl mx-auto">
@@ -187,6 +334,9 @@
       <FavouritesPage @navigate-home="setActiveView('home')" />
     </main>
 
+    <!-- Admin Dashboard View -->
+    <AdminDashboard v-if="activeView === 'admin'" @exit-admin="setActiveView('home')" />
+
     <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -249,8 +399,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { GraduationCap, Sparkles, BookOpen, AlertCircle, User, LogOut, Heart, Settings, ChevronDown } from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { GraduationCap, Sparkles, BookOpen, AlertCircle, User, LogOut, Heart, Settings, ChevronDown, Shield, LayoutDashboard, BarChart3, Database, Activity, Users } from 'lucide-vue-next'
 import FYPForm from './components/FYPForm.vue'
 import FYPResults from './components/FYPResults.vue'
 import FYPResources from './components/FYPResources.vue'
@@ -259,8 +409,10 @@ import AuthModal from './components/AuthModal.vue'
 import OnboardingModal from './components/OnboardingModal.vue'
 import ProfileModal from './components/ProfileModal.vue'
 import FavouritesPage from './components/FavouritesPage.vue'
+import AdminDashboard from './components/AdminDashboard.vue'
 import aiService from './services/aiService.js'
 import authService, { isAuthenticated, currentUser } from './services/authService.js'
+import axios from 'axios'
 
 const generatedTopics = ref([])
 const isLoading = ref(false)
@@ -284,11 +436,42 @@ const userDropdownOpen = ref(false)
 // View state
 const activeView = ref('home')
 
+// Admin stats
+const adminQuickStats = ref({
+  users: 0,
+  topics: 0,
+  generated: 0,
+  active: 0
+})
+
 const setActiveView = (view) => {
   activeView.value = view
   if (view === 'home') {
     // Optionally scroll to top when going home
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+// Fetch admin stats when user is admin
+const fetchAdminStats = async () => {
+  if (!isAuthenticated.value || currentUser.value?.role !== 'admin') return
+  
+  try {
+    const token = localStorage.getItem('auth_token')
+    const response = await axios.get('http://localhost:5000/api/admin/stats/overview', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    
+    adminQuickStats.value = {
+      users: response.data.total_users || 0,
+      topics: response.data.total_topics || 0,
+      generated: response.data.total_generated_projects || 0,
+      active: response.data.active_users_30d || 0
+    }
+  } catch (error) {
+    console.error('Error fetching admin stats:', error)
   }
 }
 
@@ -328,6 +511,11 @@ onMounted(() => {
   aiStatus.value = aiService.getStatus()
   useAI.value = aiService.isConfigured()
   
+  // Fetch admin stats if user is admin
+  if (isAuthenticated.value && currentUser.value?.role === 'admin') {
+    fetchAdminStats()
+  }
+  
   // Close dropdown when clicking outside
   document.addEventListener('click', handleClickOutside)
 })
@@ -335,6 +523,13 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
+
+// Watch for authentication changes to fetch admin stats
+watch([isAuthenticated, currentUser], ([newAuth, newUser]) => {
+  if (newAuth && newUser?.role === 'admin') {
+    fetchAdminStats()
+  }
+}, { deep: true })
 
 const generateMockTopics = (formData) => {
   // Parse skills and interests from text input
@@ -591,6 +786,11 @@ const handleClickOutside = () => {
 const openProfileModalFromDropdown = () => {
   userDropdownOpen.value = false
   profileModalOpen.value = true
+}
+
+const openAdminPanelFromDropdown = () => {
+  userDropdownOpen.value = false
+  setActiveView('admin')
 }
 
 const handleLogoutFromDropdown = async () => {
