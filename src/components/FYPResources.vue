@@ -96,16 +96,24 @@
     </div>
 
     <!-- Quick Access Section -->
-    <!-- <div class="mt-16">
+    <div v-if="quickLinks.length > 0" class="mt-16">
       <h4 class="text-2xl font-bold text-gray-900 mb-8 text-center">Quick Access</h4>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <button v-for="quickLink in quickLinks" :key="quickLink.name"
-                class="p-6 bg-white rounded-xl border border-gray-200 hover:border-primary-300 hover:shadow-lg transition-all duration-200 text-center group">
+      <div class="grid gap-4" :class="{
+        'grid-cols-1': quickLinks.length === 1,
+        'grid-cols-2': quickLinks.length === 2,
+        'grid-cols-2 md:grid-cols-3': quickLinks.length === 3,
+        'grid-cols-2 md:grid-cols-4': quickLinks.length >= 4
+      }">
+        <a v-for="quickLink in quickLinks" :key="quickLink.name"
+           :href="quickLink.url"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="p-6 bg-white rounded-xl border border-gray-200 hover:border-primary-300 hover:shadow-lg transition-all duration-200 text-center group">
           <component :is="quickLink.icon" class="w-8 h-8 text-primary-600 mx-auto mb-3 group-hover:scale-110 transition-transform" />
           <h5 class="font-medium text-gray-900">{{ quickLink.name }}</h5>
-        </button>
+        </a>
       </div>
-    </div> -->
+    </div>
 
     <!-- Tips Section -->
     <div class="mt-16 card">
@@ -250,10 +258,8 @@ const learningMaterials = [
 ]
 
 const quickLinks = [
-  { name: 'Project Templates', icon: FileText },
-  { name: 'Citation Tools', icon: BookOpen },
-  { name: 'Timeline Planner', icon: Calendar },
-  { name: 'Progress Tracker', icon: Target }
+  { name: 'Citation Tools', icon: BookOpen, url: 'https://www.citethisforme.com/' },
+  { name: 'Timeline Planner', icon: Calendar, url: 'https://www.gantt.com/' },
 ]
 
 const successTips = [

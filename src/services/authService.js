@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+import { API_BASE_URL, API_ENDPOINTS, buildApiUrl } from '../config/api.js'
 
 // Reactive user state
 const currentUser = ref(null)

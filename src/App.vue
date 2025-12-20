@@ -479,6 +479,7 @@ import AdminDashboard from './components/AdminDashboard.vue'
 import aiService from './services/aiService.js'
 import authService, { isAuthenticated, currentUser } from './services/authService.js'
 import axios from 'axios'
+import { API_ENDPOINTS, buildApiUrl } from './config/api.js'
 
 const generatedTopics = ref([])
 const isLoading = ref(false)
@@ -524,7 +525,7 @@ const fetchAdminStats = async () => {
   
   try {
     const token = localStorage.getItem('auth_token')
-    const response = await axios.get('http://localhost:5000/api/admin/stats/overview', {
+    const response = await axios.get(buildApiUrl(API_ENDPOINTS.ADMIN.STATS_OVERVIEW), {
       headers: {
         'Authorization': `Bearer ${token}`
       }

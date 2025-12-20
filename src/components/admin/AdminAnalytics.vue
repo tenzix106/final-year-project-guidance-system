@@ -88,7 +88,7 @@ const fetchUsageStats = async () => {
   loading.value = true
   try {
     const token = localStorage.getItem('auth_token')
-    const response = await axios.get('http://127.0.0.1:5000/api/admin/stats/usage', {
+    const response = await axios.get(buildApiUrl(API_ENDPOINTS.ADMIN.STATS_USAGE), {
       headers: { Authorization: `Bearer ${token}` }
     })
     usage.value = response.data

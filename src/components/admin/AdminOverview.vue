@@ -128,8 +128,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Users, BookOpen, Sparkles, Heart, UserPlus, Activity, Loader2, Settings } from 'lucide-vue-next'
+import { Users, BookOpen, Sparkles, Heart, UserPlus, Activity, AlertCircle, Loader2 } from 'lucide-vue-next'
 import axios from 'axios'
+import { API_ENDPOINTS, buildApiUrl } from '../../config/api.js'
 
 const loading = ref(true)
 const stats = ref({
@@ -147,7 +148,7 @@ const fetchStats = async () => {
   loading.value = true
   try {
     const token = localStorage.getItem('auth_token')
-    const response = await axios.get('http://127.0.0.1:5000/api/admin/stats/overview', {
+    const response = await axios.get(buildApiUrl(API_ENDPOINTS.ADMIN.STATS_OVERVIEW), {
       headers: { Authorization: `Bearer ${token}` }
     })
     stats.value = response.data

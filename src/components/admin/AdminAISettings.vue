@@ -134,7 +134,7 @@ const fetchSettings = async () => {
   loading.value = true
   try {
     const token = localStorage.getItem('auth_token')
-    const response = await axios.get('http://127.0.0.1:5000/api/admin/settings/ai', {
+    const response = await axios.get(buildApiUrl(API_ENDPOINTS.ADMIN.AI_SETTINGS), {
       headers: { Authorization: `Bearer ${token}` }
     })
     settings.value = response.data
