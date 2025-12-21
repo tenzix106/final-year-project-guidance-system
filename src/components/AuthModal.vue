@@ -245,7 +245,6 @@ import {
   AlertCircle, CheckCircle 
 } from 'lucide-vue-next'
 import authService from '../services/authService.js'
-import { API_ENDPOINTS, buildApiUrl } from '../config/api.js'
 
 const props = defineProps({
   isOpen: {
@@ -367,7 +366,7 @@ const handleRegister = async () => {
 
 const handleGoogleLogin = () => {
   // Redirect to backend Google OAuth endpoint
-  window.location.href = buildApiUrl(API_ENDPOINTS.AUTH.GOOGLE_LOGIN)
+  window.location.href = 'http://127.0.0.1:5000/api/auth/google/login'
 }
 
 // Keyboard handling

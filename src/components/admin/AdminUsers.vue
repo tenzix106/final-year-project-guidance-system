@@ -126,7 +126,7 @@ const fetchUsers = async (page = 1) => {
   loading.value = true
   try {
     const token = localStorage.getItem('auth_token')
-    const response = await axios.get(buildApiUrl(API_ENDPOINTS.ADMIN.USERS), {
+    const response = await axios.get('http://127.0.0.1:5000/api/admin/users', {
       headers: { Authorization: `Bearer ${token}` },
       params: {
         page,
@@ -157,7 +157,7 @@ const toggleRole = async (user) => {
     const token = localStorage.getItem('auth_token')
     const newRole = user.role === 'admin' ? 'student' : 'admin'
     await axios.patch(
-      buildApiUrl(API_ENDPOINTS.ADMIN.USER_ROLE(user.id)),
+      `http://127.0.0.1:5000/api/admin/users/${user.id}/role`,
       { role: newRole },
       { headers: { Authorization: `Bearer ${token}` } }
     )

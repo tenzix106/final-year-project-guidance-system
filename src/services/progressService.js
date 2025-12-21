@@ -1,10 +1,9 @@
 import { ref } from 'vue'
-import authService from './authService.js'
-import { API_BASE_URL } from '../config/api.js'
+import authService from './authService'
 
 class ProgressService {
   constructor() {
-    this.baseURL = API_BASE_URL
+    this.baseURL = 'http://localhost:5000'
     this.currentProgress = ref(null)
     this.isLoading = ref(false)
   }

@@ -1,10 +1,9 @@
 import { ref } from "vue";
 import authService from './authService.js';
-import { API_BASE_URL } from '../config/api.js';
 
 class FavouriteService {
   constructor() {
-    this.baseUrl = API_BASE_URL;
+    this.baseUrl = "http://localhost:5000";
     this.favourites = ref([]);
     this.isLoading = ref(false);
   }
