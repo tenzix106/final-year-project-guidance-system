@@ -152,6 +152,11 @@
                 <EyeOff v-else class="w-5 h-5" />
               </button>
             </div>
+            <!-- Password Length Validation -->
+            <div v-if="registerForm.password && registerForm.password.length < 6" class="mt-2 text-sm text-red-600 flex items-center space-x-2 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+              <AlertCircle class="w-4 h-4 flex-shrink-0" />
+              <span class="font-medium">Password must be at least 6 characters long</span>
+            </div>
           </div>
 
           <div>

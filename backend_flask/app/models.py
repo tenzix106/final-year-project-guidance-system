@@ -26,6 +26,14 @@ class User(db.Model):
     program = db.Column(db.String(100), nullable=True)
     academic_year = db.Column(db.String(10), nullable=True)
     
+    # Extended profile fields (stored as JSON arrays)
+    interests = db.Column(JSON, nullable=True)  # Array of interest strings
+    skills = db.Column(JSON, nullable=True)  # Array of skill strings
+    
+    # Project preferences
+    project_preference = db.Column(db.String(50), nullable=True)  # Research, Development, Both, No Preference
+    expected_duration = db.Column(db.String(20), nullable=True)  # 3-4 months, 4-6 months, etc.
+    
     # Relationships
     student_profiles = db.relationship('StudentProfile', backref='user', lazy=True, cascade='all, delete-orphan')
     generated_projects = db.relationship('GeneratedProject', backref='user', lazy=True, cascade='all, delete-orphan')

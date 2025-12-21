@@ -172,15 +172,21 @@ class AuthService {
     }
     
     try {
+      console.log('Updating profile with token:', authToken.value ? 'Token present' : 'No token')
+      console.log('Profile data:', profileData)
+      
       const resp = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         method: 'PUT',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(profileData)
       })
       
+      console.log('Response status:', resp.status, resp.statusText)
+      
       if (!resp.ok) {
         const err = await this.safeJson(resp)
-        throw new Error(err?.message || 'Failed to update profile')
+        console.error('Backend error response:', err)
+        throw new Error(err?.message || `Failed to update profile (${resp.status})`)
       }
       
       const data = await resp.json()

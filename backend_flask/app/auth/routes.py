@@ -155,17 +155,22 @@ def complete_onboarding():
 def update_profile():
     """Update user profile information"""
     user_id = get_jwt_identity()
+    print(f"[DEBUG] Profile update - JWT identity: {user_id}")
+    
     # Convert to int since JWT identity is stored as string
     try:
         user_id = int(user_id)
     except (ValueError, TypeError):
+        print(f"[ERROR] Invalid user_id type: {type(user_id)}, value: {user_id}")
         return jsonify({"message": "Invalid token"}), 401
     
     user = User.query.get(user_id)
     if user is None:
+        print(f"[ERROR] User not found with id: {user_id}")
         return jsonify({"message": "user not found"}), 404
     
     data = request.get_json(silent=True) or {}
+    print(f"[DEBUG] Profile update data: {data}")
     
     # Update allowed fields
     if 'full_name' in data:
@@ -177,7 +182,18 @@ def update_profile():
     if 'academic_year' in data:
         user.academic_year = data['academic_year'].strip() if data['academic_year'] else None
     
+    # Update extended profile fields
+    if 'interests' in data:
+        user.interests = data['interests'] if isinstance(data['interests'], list) else None
+    if 'skills' in data:
+        user.skills = data['skills'] if isinstance(data['skills'], list) else None
+    if 'project_preference' in data:
+        user.project_preference = data['project_preference'].strip() if data['project_preference'] else None
+    if 'expected_duration' in data:
+        user.expected_duration = data['expected_duration'].strip() if data['expected_duration'] else None
+    
     db.session.commit()
+    print(f"[DEBUG] Profile updated successfully for user {user_id}")
     
     return jsonify({
         "message": "profile updated successfully",
@@ -188,6 +204,10 @@ def update_profile():
             "university": user.university,
             "program": user.program,
             "academic_year": user.academic_year,
+            "interests": user.interests,
+            "skills": user.skills,
+            "project_preference": user.project_preference,
+            "expected_duration": user.expected_duration,
             "auth_provider": user.auth_provider,
             "onboarding_completed": user.onboarding_completed,
             "role": user.role
@@ -215,6 +235,10 @@ def me():
         "university": user.university,
         "program": user.program,
         "academic_year": user.academic_year,
+        "interests": user.interests,
+        "skills": user.skills,
+        "project_preference": user.project_preference,
+        "expected_duration": user.expected_duration,
         "auth_provider": user.auth_provider,
         "onboarding_completed": user.onboarding_completed,
         "role": user.role

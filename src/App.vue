@@ -449,10 +449,10 @@
       @success="handleAuthSuccess"
     />
 
-    <!-- Onboarding Modal -->
-    <OnboardingModal
-      :is-open="onboardingModalOpen"
-      @complete="handleOnboardingComplete"
+    <!-- Profile Completion Modal -->
+    <ProfileCompletionModal
+      :is-open="profileCompletionModalOpen"
+      @completed="handleProfileCompletion"
     />
 
     <!-- Profile Modal -->
@@ -472,7 +472,7 @@ import FYPResults from './components/FYPResults.vue'
 import FYPResources from './components/FYPResources.vue'
 import AISetupGuide from './components/AISetupGuide.vue'
 import AuthModal from './components/AuthModal.vue'
-import OnboardingModal from './components/OnboardingModal.vue'
+import ProfileCompletionModal from './components/ProfileCompletionModal.vue'
 import ProfileModal from './components/ProfileModal.vue'
 import FavouritesPage from './components/FavouritesPage.vue'
 import AdminDashboard from './components/AdminDashboard.vue'
@@ -490,8 +490,8 @@ const useAI = ref(false)
 const authModalOpen = ref(false)
 const authModalMode = ref('login')
 
-// Onboarding state
-const onboardingModalOpen = ref(false)
+// Profile completion state
+const profileCompletionModalOpen = ref(false)
 
 // Profile state
 const profileModalOpen = ref(false)
@@ -582,6 +582,14 @@ onMounted(() => {
     fetchAdminStats()
   }
   
+  // Check if OAuth user needs to complete profile
+  if (isAuthenticated.value && currentUser.value && !currentUser.value.onboarding_completed) {
+    // Show profile completion modal for OAuth users who just signed in
+    setTimeout(() => {
+      profileCompletionModalOpen.value = true
+    }, 500)
+  }
+  
   // Close dropdown when clicking outside
   document.addEventListener('click', handleClickOutside)
 })
@@ -590,10 +598,15 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
 
-// Watch for authentication changes to fetch admin stats
+// Watch for authentication changes to fetch admin stats and check onboarding
 watch([isAuthenticated, currentUser], ([newAuth, newUser]) => {
   if (newAuth && newUser?.role === 'admin') {
     fetchAdminStats()
+  }
+  
+  // Check if newly authenticated user needs to complete profile
+  if (newAuth && newUser && !newUser.onboarding_completed && !profileCompletionModalOpen.value) {
+    profileCompletionModalOpen.value = true
   }
 }, { deep: true })
 
@@ -792,33 +805,37 @@ const closeAuthModal = () => {
   authModalOpen.value = false
 }
 
-const handleAuthSuccess = (type) => {
+const handleAuthSuccess = async (type) => {
   console.log('Authentication successful:', type)
   closeAuthModal()
   
-  // Redirect to home view after authentication
-  setActiveView('home')
+  // Wait a moment for user data to be fetched
+  await new Promise(resolve => setTimeout(resolve, 300))
   
-  // Check if user needs onboarding (new users who just registered)
-  if (type === 'register' && currentUser.value && !currentUser.value.onboarding_completed) {
-    // Show onboarding after a short delay
-    setTimeout(() => {
-      onboardingModalOpen.value = true
-    }, 500)
+  // Check if user needs to complete profile (anyone who hasn't completed onboarding)
+  if (currentUser.value && !currentUser.value.onboarding_completed) {
+    // Show profile completion modal
+    profileCompletionModalOpen.value = true
+  } else {
+    // Redirect to home view if profile already completed
+    setActiveView('home')
   }
 }
 
-const handleOnboardingComplete = async (skipped) => {
-  onboardingModalOpen.value = false
+const handleProfileCompletion = async (skipped) => {
+  profileCompletionModalOpen.value = false
   
-  // Mark onboarding as completed in the backend
-  if (isAuthenticated.value) {
-    try {
-      await authService.completeOnboarding()
-      console.log(skipped ? 'Onboarding skipped' : 'Onboarding completed')
-    } catch (error) {
-      console.error('Error completing onboarding:', error)
-    }
+  console.log(skipped ? 'Profile completion skipped' : 'Profile completed')
+  
+  // Redirect to home view after profile completion
+  setActiveView('home')
+  
+  // If the user completed their profile, show onboarding tutorial
+  if (!skipped && currentUser.value) {
+    // Optional: Show a success message
+    setTimeout(() => {
+      console.log('Profile setup complete! You can now explore the system.')
+    }, 500)
   }
 }
 

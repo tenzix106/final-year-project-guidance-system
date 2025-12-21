@@ -125,11 +125,84 @@
                 :disabled="loading"
               >
                 <option value="">Select year</option>
-                <option value="1">Year 1</option>
-                <option value="2">Year 2</option>
-                <option value="3">Year 3</option>
-                <option value="4">Year 4</option>
-                <option value="5">Year 5+</option>
+                <option value="Year 1">Year 1</option>
+                <option value="Year 2">Year 2</option>
+                <option value="Year 3">Year 3</option>
+                <option value="Year 4">Year 4</option>
+                <option value="Year 5+">Year 5+</option>
+                <option value="Graduate">Graduate Student</option>
+              </select>
+              <ChevronDown class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="border-t border-gray-200 my-6"></div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Academic Interests & Skills</h3>
+
+          <!-- Areas of Interest -->
+          <div>
+            <label for="interests" class="block text-sm font-medium text-gray-700 mb-1">Areas of Interest</label>
+            <textarea
+              id="interests"
+              v-model="formData.interests"
+              rows="3"
+              class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-gray-50 focus:bg-white resize-none"
+              placeholder="e.g., Artificial Intelligence, Web Development, Data Analytics"
+              :disabled="loading"
+            ></textarea>
+            <p class="text-xs text-gray-500 mt-1">Separate multiple interests with commas</p>
+          </div>
+
+          <!-- Technical Skills -->
+          <div>
+            <label for="skills" class="block text-sm font-medium text-gray-700 mb-1">Technical Skills</label>
+            <textarea
+              id="skills"
+              v-model="formData.skills"
+              rows="3"
+              class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-gray-50 focus:bg-white resize-none"
+              placeholder="e.g., Python, JavaScript, Machine Learning, Database Design"
+              :disabled="loading"
+            ></textarea>
+            <p class="text-xs text-gray-500 mt-1">Separate multiple skills with commas</p>
+          </div>
+
+          <!-- Project Preference -->
+          <div>
+            <label for="projectPreference" class="block text-sm font-medium text-gray-700 mb-1">Project Type Preference</label>
+            <div class="relative">
+              <select
+                id="projectPreference"
+                v-model="formData.project_preference"
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-gray-50 focus:bg-white appearance-none"
+                :disabled="loading"
+              >
+                <option value="">Select preference</option>
+                <option value="Research">Research-oriented</option>
+                <option value="Development">Development/Implementation</option>
+                <option value="Both">Both Research & Development</option>
+                <option value="No Preference">No Preference</option>
+              </select>
+              <ChevronDown class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          <!-- Expected Duration -->
+          <div>
+            <label for="expectedDuration" class="block text-sm font-medium text-gray-700 mb-1">Expected Project Duration</label>
+            <div class="relative">
+              <select
+                id="expectedDuration"
+                v-model="formData.expected_duration"
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-gray-50 focus:bg-white appearance-none"
+                :disabled="loading"
+              >
+                <option value="">Select duration</option>
+                <option value="3-4 months">3-4 months</option>
+                <option value="4-6 months">4-6 months</option>
+                <option value="6-8 months">6-8 months</option>
+                <option value="8-12 months">8-12 months</option>
               </select>
               <ChevronDown class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
             </div>
@@ -200,7 +273,11 @@ const formData = ref({
   full_name: '',
   university: '',
   program: '',
-  academic_year: ''
+  academic_year: '',
+  interests: '',
+  skills: '',
+  project_preference: '',
+  expected_duration: ''
 })
 
 const originalData = ref({})
@@ -212,7 +289,11 @@ watch(() => props.isOpen, (isOpen) => {
       full_name: currentUser.value.full_name || '',
       university: currentUser.value.university || '',
       program: currentUser.value.program || '',
-      academic_year: currentUser.value.academic_year || ''
+      academic_year: currentUser.value.academic_year || '',
+      interests: currentUser.value.interests ? currentUser.value.interests.join(', ') : '',
+      skills: currentUser.value.skills ? currentUser.value.skills.join(', ') : '',
+      project_preference: currentUser.value.project_preference || '',
+      expected_duration: currentUser.value.expected_duration || ''
     }
     originalData.value = { ...formData.value }
     clearMessages()
@@ -242,7 +323,19 @@ const handleSubmit = async () => {
   loading.value = true
   
   try {
-    await authService.updateProfile(formData.value)
+    // Prepare data - convert comma-separated strings to arrays for interests and skills
+    const profileData = {
+      full_name: formData.value.full_name,
+      university: formData.value.university,
+      program: formData.value.program,
+      academic_year: formData.value.academic_year,
+      interests: formData.value.interests ? formData.value.interests.split(',').map(i => i.trim()).filter(i => i) : [],
+      skills: formData.value.skills ? formData.value.skills.split(',').map(s => s.trim()).filter(s => s) : [],
+      project_preference: formData.value.project_preference || null,
+      expected_duration: formData.value.expected_duration || null
+    }
+    
+    await authService.updateProfile(profileData)
     success.value = 'Profile updated successfully!'
     originalData.value = { ...formData.value }
     

@@ -3,6 +3,21 @@
     <div class="text-center mb-8">
       <h3 class="text-3xl font-bold text-gray-900 mb-4">Project Information</h3>
       <p class="text-gray-600">Tell us about your interests, skills, and requirements to get personalized project suggestions.</p>
+      
+      <!-- Auto-fill Notification -->
+      <div v-if="isAuthenticated && profileDataLoaded" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg inline-flex items-center space-x-2">
+        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span class="text-sm text-blue-700 font-medium">Form auto-filled from your profile</span>
+        <button 
+          type="button" 
+          @click="clearForm" 
+          class="text-xs text-blue-600 hover:text-blue-800 underline ml-2"
+        >
+          Clear
+        </button>
+      </div>
     </div>
 
     <form @submit.prevent="handleSubmit" class="space-y-8">
@@ -225,11 +240,13 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { Sparkles, Loader2 } from 'lucide-vue-next'
+import { currentUser, isAuthenticated } from '../services/authService.js'
 
 const emit = defineEmits(['generate-topics'])
 const isSubmitting = ref(false)
+const profileDataLoaded = ref(false)
 
 const formData = reactive({
   name: '',
@@ -245,6 +262,116 @@ const formData = reactive({
   supervisor: '',
   budget: ''
 })
+
+// Store original empty state
+const emptyFormData = {
+  name: '',
+  studentId: '',
+  program: '',
+  academicYear: '',
+  skillsText: '',
+  interestsText: '',
+  difficulty: '',
+  duration: '',
+  projectType: '',
+  additionalRequirements: '',
+  supervisor: '',
+  budget: ''
+}
+
+// Clear form back to empty state
+const clearForm = () => {
+  Object.assign(formData, emptyFormData)
+  profileDataLoaded.value = false
+}
+
+// Auto-populate form from user profile
+const populateFromProfile = () => {
+  if (!isAuthenticated.value || !currentUser.value) {
+    profileDataLoaded.value = false
+    return
+  }
+  
+  const user = currentUser.value
+  let hasData = false
+  
+  // Populate basic information
+  if (user.full_name) {
+    formData.name = user.full_name
+    hasData = true
+  }
+  
+  if (user.university) {
+    formData.studentId = user.university
+    hasData = true
+  }
+  
+  // Map program from profile to form dropdown value
+  if (user.program) {
+    // Convert stored program to kebab-case for dropdown
+    const programValue = user.program.toLowerCase().replace(/\s+/g, '-')
+    formData.program = programValue
+    hasData = true
+  }
+  
+  if (user.academic_year) {
+    // Extract year number from formats like "Year 3" or "2024"
+    const yearMatch = user.academic_year.match(/\d{4}/)
+    if (yearMatch) {
+      formData.academicYear = yearMatch[0]
+      hasData = true
+    }
+  }
+  
+  // Populate skills from profile
+  if (user.skills && Array.isArray(user.skills) && user.skills.length > 0) {
+    formData.skillsText = user.skills.join(', ')
+    hasData = true
+  }
+  
+  // Populate interests from profile
+  if (user.interests && Array.isArray(user.interests) && user.interests.length > 0) {
+    formData.interestsText = user.interests.join(', ')
+    hasData = true
+  }
+  
+  // Populate project preference
+  if (user.project_preference) {
+    const preferenceMap = {
+      'Research': 'research',
+      'Development': 'application',
+      'Both': 'innovation',
+      'No Preference': ''
+    }
+    formData.projectType = preferenceMap[user.project_preference] || ''
+    if (formData.projectType) hasData = true
+  }
+  
+  // Populate expected duration
+  if (user.expected_duration) {
+    const durationMap = {
+      '3-4 months': '3-4',
+      '4-6 months': '4-6',
+      '6-8 months': '6-8',
+      '8-12 months': '8-12'
+    }
+    formData.duration = durationMap[user.expected_duration] || ''
+    if (formData.duration) hasData = true
+  }
+  
+  // Set flag if any data was populated
+  profileDataLoaded.value = hasData
+}
+
+// Populate form when component mounts
+onMounted(() => {
+  populateFromProfile()
+})
+
+// Watch for user changes (e.g., after login or profile update)
+watch([isAuthenticated, currentUser], () => {
+  populateFromProfile()
+}, { deep: true })
 
 const projectTypes = [
   {
