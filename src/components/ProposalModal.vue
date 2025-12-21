@@ -182,7 +182,7 @@
           </button>
           <button class="btn-primary">
             <Heart class="w-4 h-4 mr-2" />
-            Save to Favorites
+            Save to Favourites
           </button>
         </div>
       </div>

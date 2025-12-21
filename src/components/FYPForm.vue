@@ -23,33 +23,45 @@
     <form @submit.prevent="handleSubmit" class="space-y-8">
       <!-- Personal Information -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+        <div data-field="name">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Full Name <span class="text-red-500">*</span></label>
           <input
             v-model="formData.name"
             type="text"
             class="input-field"
+            :class="{ 'border-red-500 focus:ring-red-500 focus:border-red-500': showValidation && validationErrors.name }"
             placeholder="Enter your full name"
+            @blur="validateField('name')"
             required
           />
+          <p v-if="showValidation && validationErrors.name" class="mt-1 text-sm text-red-600">{{ validationErrors.name }}</p>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">University/Institution</label>
+        <div data-field="studentId">
+          <label class="block text-sm font-medium text-gray-700 mb-2">University/Institution <span class="text-red-500">*</span></label>
           <input
             v-model="formData.studentId"
             type="text"
             class="input-field"
+            :class="{ 'border-red-500 focus:ring-red-500 focus:border-red-500': showValidation && validationErrors.studentId }"
             placeholder="e.g., Stanford University, MIT, Oxford"
+            @blur="validateField('studentId')"
             required
           />
+          <p v-if="showValidation && validationErrors.studentId" class="mt-1 text-sm text-red-600">{{ validationErrors.studentId }}</p>
         </div>
       </div>
 
       <!-- Academic Information -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Program/Degree</label>
-          <select v-model="formData.program" class="input-field" required>
+        <div data-field="program">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Program/Degree <span class="text-red-500">*</span></label>
+          <select 
+            v-model="formData.program" 
+            class="input-field" 
+            :class="{ 'border-red-500 focus:ring-red-500 focus:border-red-500': showValidation && validationErrors.program }"
+            @change="validateField('program')"
+            required
+          >
             <option value="">Select your program</option>
             <optgroup label="Technology & Computing">
               <option value="computer-science">Computer Science</option>
@@ -106,81 +118,115 @@
             </optgroup>
             <option value="other">Other</option>
           </select>
+          <p v-if="showValidation && validationErrors.program" class="mt-1 text-sm text-red-600">{{ validationErrors.program }}</p>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Academic Year</label>
-          <select v-model="formData.academicYear" class="input-field" required>
+        <div data-field="academicYear">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Academic Year <span class="text-red-500">*</span></label>
+          <select 
+            v-model="formData.academicYear" 
+            class="input-field" 
+            :class="{ 'border-red-500 focus:ring-red-500 focus:border-red-500': showValidation && validationErrors.academicYear }"
+            @change="validateField('academicYear')"
+            required
+          >
             <option value="">Select academic year</option>
             <option value="2024">2024</option>
             <option value="2025">2025</option>
             <option value="2026">2026</option>
           </select>
+          <p v-if="showValidation && validationErrors.academicYear" class="mt-1 text-sm text-red-600">{{ validationErrors.academicYear }}</p>
         </div>
       </div>
 
       <!-- Skills & Knowledge -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Skills & Knowledge Areas</label>
+      <div data-field="skillsText">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Skills & Knowledge Areas <span class="text-red-500">*</span></label>
         <p class="text-sm text-gray-600 mb-3">Enter keywords related to your skills, technologies, or areas of expertise (e.g., "Python programming", "Data analysis", "Marketing", "Graphic design", "Research methods")</p>
         <textarea
           v-model="formData.skillsText"
           class="input-field h-24 resize-none"
+          :class="{ 'border-red-500 focus:ring-red-500 focus:border-red-500': showValidation && validationErrors.skillsText }"
           placeholder="Enter your skills and knowledge areas separated by commas or new lines..."
+          @blur="validateField('skillsText')"
           required
         ></textarea>
-        <div class="mt-2 text-xs text-gray-500">
+        <p v-if="showValidation && validationErrors.skillsText" class="mt-1 text-sm text-red-600">{{ validationErrors.skillsText }}</p>
+        <div v-else class="mt-2 text-xs text-gray-500">
           <strong>Examples:</strong> Web development, Machine learning, Business analysis, Digital marketing, Statistical analysis, Creative writing, Laboratory techniques, Financial modeling, etc.
         </div>
       </div>
 
       <!-- Areas of Interest -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Areas of Interest & Research Topics</label>
+      <div data-field="interestsText">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Areas of Interest & Research Topics <span class="text-red-500">*</span></label>
         <p class="text-sm text-gray-600 mb-3">Enter keywords related to topics, fields, or subjects that interest you (e.g., "Artificial Intelligence", "Sustainable energy", "Healthcare technology", "Social media", "Environmental science")</p>
         <textarea
           v-model="formData.interestsText"
           class="input-field h-24 resize-none"
+          :class="{ 'border-red-500 focus:ring-red-500 focus:border-red-500': showValidation && validationErrors.interestsText }"
           placeholder="Enter your areas of interest separated by commas or new lines..."
+          @blur="validateField('interestsText')"
           required
         ></textarea>
-        <div class="mt-2 text-xs text-gray-500">
+        <p v-if="showValidation && validationErrors.interestsText" class="mt-1 text-sm text-red-600">{{ validationErrors.interestsText }}</p>
+        <div v-else class="mt-2 text-xs text-gray-500">
           <strong>Examples:</strong> Climate change, Human psychology, E-commerce, Renewable energy, Education technology, Urban planning, Biotechnology, Digital transformation, etc.
         </div>
       </div>
 
       <!-- Project Preferences -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Difficulty Level</label>
-          <select v-model="formData.difficulty" class="input-field" required>
+        <div data-field="difficulty">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Difficulty Level <span class="text-red-500">*</span></label>
+          <select 
+            v-model="formData.difficulty" 
+            class="input-field" 
+            :class="{ 'border-red-500 focus:ring-red-500 focus:border-red-500': showValidation && validationErrors.difficulty }"
+            @change="validateField('difficulty')"
+            required
+          >
             <option value="">Select difficulty</option>
             <option value="beginner">Beginner</option>
             <option value="intermediate">Intermediate</option>
             <option value="advanced">Advanced</option>
           </select>
+          <p v-if="showValidation && validationErrors.difficulty" class="mt-1 text-sm text-red-600">{{ validationErrors.difficulty }}</p>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Project Duration</label>
-          <select v-model="formData.duration" class="input-field" required>
+        <div data-field="duration">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Project Duration <span class="text-red-500">*</span></label>
+          <select 
+            v-model="formData.duration" 
+            class="input-field" 
+            :class="{ 'border-red-500 focus:ring-red-500 focus:border-red-500': showValidation && validationErrors.duration }"
+            @change="validateField('duration')"
+            required
+          >
             <option value="">Select duration</option>
             <option value="3-4">3-4 months</option>
             <option value="4-6">4-6 months</option>
             <option value="6-8">6-8 months</option>
             <option value="8-12">8-12 months</option>
           </select>
+          <p v-if="showValidation && validationErrors.duration" class="mt-1 text-sm text-red-600">{{ validationErrors.duration }}</p>
         </div>
       </div>
 
       <!-- Project Type -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-3">Project Type Preference</label>
+      <div data-field="projectType">
+        <label class="block text-sm font-medium text-gray-700 mb-3">Project Type Preference <span class="text-red-500">*</span></label>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <label v-for="type in projectTypes" :key="type.value" class="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-primary-300 transition-colors">
+          <label 
+            v-for="type in projectTypes" 
+            :key="type.value" 
+            class="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary-300 transition-colors"
+            :class="showValidation && validationErrors.projectType ? 'border-red-500' : 'border-gray-200'"
+          >
             <input
               type="radio"
               :value="type.value"
               v-model="formData.projectType"
               class="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+              @change="validateField('projectType')"
             />
             <div>
               <div class="font-medium text-gray-900">{{ type.label }}</div>
@@ -188,6 +234,7 @@
             </div>
           </label>
         </div>
+        <p v-if="showValidation && validationErrors.projectType" class="mt-2 text-sm text-red-600">{{ validationErrors.projectType }}</p>
       </div>
 
       <!-- Additional Requirements -->
@@ -247,6 +294,7 @@ import { currentUser, isAuthenticated } from '../services/authService.js'
 const emit = defineEmits(['generate-topics'])
 const isSubmitting = ref(false)
 const profileDataLoaded = ref(false)
+const showValidation = ref(false)
 
 const formData = reactive({
   name: '',
@@ -261,6 +309,18 @@ const formData = reactive({
   additionalRequirements: '',
   supervisor: '',
   budget: ''
+})
+
+const validationErrors = reactive({
+  name: '',
+  studentId: '',
+  program: '',
+  academicYear: '',
+  skillsText: '',
+  interestsText: '',
+  difficulty: '',
+  duration: '',
+  projectType: ''
 })
 
 // Store original empty state
@@ -283,6 +343,56 @@ const emptyFormData = {
 const clearForm = () => {
   Object.assign(formData, emptyFormData)
   profileDataLoaded.value = false
+  showValidation.value = false
+  // Clear validation errors
+  Object.keys(validationErrors).forEach(key => {
+    validationErrors[key] = ''
+  })
+}
+
+// Validate individual field
+const validateField = (field) => {
+  if (!showValidation.value) return
+  
+  switch(field) {
+    case 'name':
+      validationErrors.name = !formData.name.trim() ? 'Please enter your full name' : ''
+      break
+    case 'studentId':
+      validationErrors.studentId = !formData.studentId.trim() ? 'Please enter your university/institution' : ''
+      break
+    case 'program':
+      validationErrors.program = !formData.program ? 'Please select your program/degree' : ''
+      break
+    case 'academicYear':
+      validationErrors.academicYear = !formData.academicYear ? 'Please select your academic year' : ''
+      break
+    case 'skillsText':
+      validationErrors.skillsText = !formData.skillsText.trim() ? 'Please enter at least one skill or knowledge area' : ''
+      break
+    case 'interestsText':
+      validationErrors.interestsText = !formData.interestsText.trim() ? 'Please enter at least one area of interest' : ''
+      break
+    case 'difficulty':
+      validationErrors.difficulty = !formData.difficulty ? 'Please select a difficulty level' : ''
+      break
+    case 'duration':
+      validationErrors.duration = !formData.duration ? 'Please select a project duration' : ''
+      break
+    case 'projectType':
+      validationErrors.projectType = !formData.projectType ? 'Please select a project type preference' : ''
+      break
+  }
+}
+
+// Validate all fields
+const validateAllFields = () => {
+  showValidation.value = true
+  const fields = ['name', 'studentId', 'program', 'academicYear', 'skillsText', 'interestsText', 'difficulty', 'duration', 'projectType']
+  fields.forEach(field => validateField(field))
+  
+  // Check if there are any errors
+  return !Object.values(validationErrors).some(error => error !== '')
 }
 
 // Auto-populate form from user profile
@@ -397,22 +507,22 @@ const projectTypes = [
 ]
 
 const handleSubmit = async () => {
-  isSubmitting.value = true
+  // Validate all fields
+  const isValid = validateAllFields()
   
-  // Validate required fields
-  if (!formData.name || !formData.studentId || !formData.program || 
-      !formData.academicYear || !formData.difficulty || !formData.duration || 
-      !formData.projectType) {
-    alert('Please fill in all required fields')
-    isSubmitting.value = false
+  if (!isValid) {
+    // Scroll to first error
+    const firstErrorField = Object.keys(validationErrors).find(key => validationErrors[key] !== '')
+    if (firstErrorField) {
+      const element = document.querySelector(`[data-field="${firstErrorField}"]`)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
     return
   }
-
-  if (!formData.skillsText.trim() || !formData.interestsText.trim()) {
-    alert('Please enter your skills and areas of interest')
-    isSubmitting.value = false
-    return
-  }
+  
+  isSubmitting.value = true
 
   // Emit the form data
   emit('generate-topics', { ...formData })

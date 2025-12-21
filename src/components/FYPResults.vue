@@ -123,7 +123,7 @@
                 isFavourite(topic.title) ? 'fill-current' : ''
               ]"
             />
-            {{ isFavourite(topic.title) ? 'Remove from Favorites' : 'Save to Favorites' }}
+            {{ isFavourite(topic.title) ? 'Remove from Favourites' : 'Save to Favourites' }}
           </button>
           <button class="btn-secondary">
             <Share2 class="w-4 h-4 mr-2" />
@@ -228,16 +228,19 @@ const toggleFavourite = async (topic) => {
       const status = favouriteStatuses.value.get(topic.title)
       if (status?.favourite_id) {
         await favouriteService.removeFavourite(status.favourite_id)
-        favouriteStatuses.value.set(topic.title, { is_favourite: false })
+        // Update local state after successful removal
+        favouriteStatuses.value.set(topic.title, { is_favourite: false, favourite_id: null })
       }
     } else {
       // Add to favourites
-      await favouriteService.saveFavourite(topic)
-      favouriteStatuses.value.set(topic.title, { is_favourite: true })
+      const result = await favouriteService.saveFavourite(topic)
+      // Refresh the favourite status from the server to get the favourite_id
+      const updatedStatus = await favouriteService.checkFavouriteStatus(topic.title)
+      favouriteStatuses.value.set(topic.title, updatedStatus)
     }
   } catch (error) {
     console.error('Error toggling favourite:', error)
-    // Show error message to user (you might want to add a toast notification system)
+    // Show error message to user
     alert(`Error ${isCurrentlyFavourite ? 'removing' : 'saving'} favourite: ${error.message}`)
   } finally {
     savingFavourites.value.delete(topic.title)

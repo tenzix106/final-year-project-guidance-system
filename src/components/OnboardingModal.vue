@@ -122,7 +122,7 @@ const steps = [
             </div>
             <div>
               <h4 class="font-semibold text-gray-900">Review & Select</h4>
-              <p class="text-gray-600 text-sm">Browse through personalized topics and choose your favorite</p>
+              <p class="text-gray-600 text-sm">Browse through personalized topics and choose your favourite</p>
             </div>
           </div>
         </div>
@@ -131,8 +131,8 @@ const steps = [
     }
   },
   {
-    title: 'Save Your Favorites',
-    description: 'Found a project you like? Save it to your favorites! Add notes, track progress, and access academic papers to support your research.',
+    title: 'Save Your Favourites',
+    description: 'Found a project you like? Save it to your favourites! Add notes, track progress, and access academic papers to support your research.',
     icon: 'BookMarked',
     component: {
       template: `

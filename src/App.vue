@@ -23,8 +23,7 @@
                 <Heart class="w-4 h-4" />
                 <span>My Favourites</span>
               </button>
-              <a v-if="activeView === 'home'" href="#resources" class="text-gray-600 hover:text-primary-600 transition-colors">Resources</a>
-              <a v-if="activeView === 'home'" href="#setup" class="text-gray-600 hover:text-primary-600 transition-colors">AI Setup</a>
+              <a href="#resources" @click="scrollToSection('resources')" class="text-gray-600 hover:text-primary-600 transition-colors">Resources</a>
             </nav>
 
             <!-- Auth Section -->
@@ -169,7 +168,7 @@
     </header>
 
     <!-- Hero Section -->
-    <section v-if="!isAuthenticated || currentUser?.role === 'student'" class="py-20 px-4 sm:px-6 lg:px-8">
+    <section v-if="(!isAuthenticated || currentUser?.role === 'student') && activeView === 'home'" class="py-20 px-4 sm:px-6 lg:px-8">
       <div class="max-w-4xl mx-auto text-center">
         <h2 class="text-5xl font-bold text-gray-900 mb-6 animate-fade-in">
           Find Your Perfect
@@ -499,8 +498,8 @@ const profileModalOpen = ref(false)
 // User dropdown state
 const userDropdownOpen = ref(false)
 
-// View state
-const activeView = ref('home')
+// View state - persisted in localStorage
+const activeView = ref(localStorage.getItem('activeView') || 'home')
 
 // Admin stats
 const adminQuickStats = ref({
@@ -512,9 +511,31 @@ const adminQuickStats = ref({
 
 const setActiveView = (view) => {
   activeView.value = view
+  // Persist view to localStorage
+  localStorage.setItem('activeView', view)
   if (view === 'home') {
     // Optionally scroll to top when going home
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+const scrollToSection = (sectionId) => {
+  // First navigate to home if not already there
+  if (activeView.value !== 'home') {
+    setActiveView('home')
+    // Wait for view to change, then scroll
+    setTimeout(() => {
+      const element = document.getElementById(sectionId)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' })
+      }
+    }, 100)
+  } else {
+    // Already on home, just scroll
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 }
 

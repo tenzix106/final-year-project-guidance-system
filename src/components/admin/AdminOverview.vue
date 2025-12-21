@@ -59,7 +59,7 @@
           <div>
             <p class="text-sm font-medium text-gray-600">Saved Projects</p>
             <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.total_saved_projects }}</p>
-            <p class="text-sm text-gray-500 mt-1">User favorites</p>
+            <p class="text-sm text-gray-500 mt-1">User favourites</p>
           </div>
           <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
             <Heart class="w-6 h-6 text-orange-600" />

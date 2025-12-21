@@ -440,6 +440,28 @@ app.get('/api/test-scholarai', async (req, res) => {
   }
 });
 
+// Helper function to generate mock papers when API doesn't return enough
+function generateMockPapers(query, count) {
+  const mockPapers = [];
+  const baseYear = new Date().getFullYear();
+  
+  for (let i = 0; i < count; i++) {
+    mockPapers.push({
+      title: `Research Study on ${query.split(' ').slice(0, 4).join(' ')} - Part ${i + 1}`,
+      abstract: `This paper presents a comprehensive analysis of ${query}. The research explores various methodologies and approaches, providing valuable insights into the field. The study includes experimental results, theoretical frameworks, and practical applications relevant to academic research.`,
+      authors: ['Research Team', 'Academic Authors', 'Field Experts'],
+      publication_date: `${baseYear - i}`,
+      cited_by_count: Math.floor(Math.random() * 100),
+      url: '#',
+      ss_id: `mock-${Date.now()}-${i}`,
+      doi: null,
+      pdf_url: null
+    });
+  }
+  
+  return mockPapers;
+}
+
 // ScholarAI proxy endpoint
 app.post('/api/search-papers', async (req, res) => {
   try {
@@ -466,42 +488,76 @@ app.post('/api/search-papers', async (req, res) => {
 
     const finalQuery = keywords || query;
 
-    const params = new URLSearchParams({
-      query: finalQuery,
-      sort: 'cited_by_count',
-      peer_reviewed_only: 'true',
-      offset: '0'
-    });
+    // ScholarAI API returns max 4 papers per request, so we need to paginate
+    const maxPapersPerRequest = 4;
+    const requestsNeeded = Math.ceil(limit / maxPapersPerRequest);
+    let allPapers = [];
+    let totalResults = 0;
+    
+    console.log(`ScholarAI API: Fetching ${limit} papers (requires ${requestsNeeded} requests)`);
 
-    const apiUrl = `https://api.scholarai.io/api/abstracts?${params.toString()}`;
-    console.log('ScholarAI API request with query:', finalQuery);
-
-    const response = await fetch(apiUrl, {
-      method: 'GET',
-      headers: {
-        'x-scholarai-api-key': apiKey
-      }
-    });
-
-    console.log('ScholarAI API response status:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('ScholarAI API error:', response.status, errorText);
-      
-      return res.status(200).json({ 
-        error: 'API error',
-        useMock: true 
+    // Make multiple requests with different offsets to get more papers
+    for (let i = 0; i < requestsNeeded; i++) {
+      const offset = i * maxPapersPerRequest;
+      const params = new URLSearchParams({
+        query: finalQuery,
+        sort: 'cited_by_count',
+        peer_reviewed_only: 'true',
+        offset: offset.toString(),
+        limit: maxPapersPerRequest.toString()
       });
+
+      const apiUrl = `https://api.scholarai.io/api/abstracts?${params.toString()}`;
+      console.log(`ScholarAI API request ${i + 1}/${requestsNeeded} with query:`, finalQuery, `offset: ${offset}`);
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'x-scholarai-api-key': apiKey
+          }
+        });
+
+        console.log(`ScholarAI API response ${i + 1}/${requestsNeeded} status:`, response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('ScholarAI API error:', response.status, errorText);
+          break; // Stop making more requests if one fails
+        }
+
+        const data = await response.json();
+        const papers = data.paper_data || [];
+        
+        // Store total results from first request
+        if (i === 0) {
+          totalResults = data.total_num_results || 0;
+        }
+        
+        console.log(`ScholarAI API request ${i + 1}/${requestsNeeded} returned:`, papers.length, 'papers');
+        
+        if (papers.length === 0) {
+          console.log('No more papers available, stopping pagination');
+          break; // No more papers available
+        }
+        
+        allPapers = [...allPapers, ...papers];
+        
+        // If we have enough papers, stop making requests
+        if (allPapers.length >= limit) {
+          console.log(`Reached target of ${limit} papers, stopping pagination`);
+          break;
+        }
+        
+      } catch (error) {
+        console.error(`Error in request ${i + 1}:`, error);
+        break;
+      }
     }
 
-    const data = await response.json();
+    console.log(`Total papers fetched from ScholarAI: ${allPapers.length}`);
     
-    // ScholarAI returns: { paper_data: [...], total_num_results: N, next_offset: M }
-    const papers = data.paper_data || [];
-    console.log('ScholarAI API returned:', papers.length, 'papers out of', data.total_num_results || 0, 'total');
-    
-    if (papers.length === 0) {
+    if (allPapers.length === 0) {
       console.log('No papers found, using mock data fallback');
       return res.status(200).json({ 
         error: 'No papers found for this query',
@@ -510,7 +566,7 @@ app.post('/api/search-papers', async (req, res) => {
     }
     
     // Transform ScholarAI format to our expected format
-    const transformedPapers = papers.slice(0, limit).map(paper => ({
+    const transformedPapers = allPapers.map(paper => ({
       title: paper.title || 'Untitled Paper',
       abstract: paper.answer || 'No abstract available',
       authors: paper.creators || [],
@@ -524,7 +580,8 @@ app.post('/api/search-papers', async (req, res) => {
     
     res.json({ 
       results: transformedPapers,
-      totalResults: data.total_num_results || papers.length
+      totalResults: totalResults || transformedPapers.length,
+      apiPapers: transformedPapers.length
     });
 
   } catch (error) {

@@ -126,15 +126,29 @@
             </h4>
             <div class="flex gap-2">
               <button 
+                v-if="researchPapers.has(favourite.id)"
+                @click="showingPapers = favourite.id; expandedPapers = false"
+                class="text-sm px-3 py-1 bg-secondary-100 text-secondary-700 hover:bg-secondary-200 rounded-md transition-all font-medium flex items-center gap-1">
+                <BookOpen class="w-3 h-3" />
+                View Papers ({{ researchPapers.get(favourite.id).length }})
+              </button>
+              <button 
+                v-if="researchPapers.has(favourite.id)"
+                @click="refetchPapers(favourite.id)"
+                :disabled="loadingPapers.has(favourite.id)"
+                class="text-sm px-3 py-1 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-md transition-all font-medium flex items-center gap-1"
+                title="Fetch new papers">
+                <component :is="loadingPapers.has(favourite.id) ? Loader2 : ExternalLink" 
+                           :class="['w-3 h-3', loadingPapers.has(favourite.id) ? 'animate-spin' : '']" />
+              </button>
+              <button 
+                v-if="!researchPapers.has(favourite.id)"
                 @click="toggleResearchPapers(favourite.id)"
                 :disabled="loadingPapers.has(favourite.id)"
-                class="text-sm px-3 py-1 rounded-md transition-all font-medium flex items-center gap-1"
-                :class="researchPapers.has(favourite.id) 
-                  ? 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200' 
-                  : 'bg-primary-500 text-white hover:bg-primary-600 shadow-md'">
+                class="text-sm px-3 py-1 bg-primary-500 text-white hover:bg-primary-600 rounded-md transition-all font-medium flex items-center gap-1 shadow-md">
                 <component :is="loadingPapers.has(favourite.id) ? Loader2 : BookOpen" 
                            :class="['w-3 h-3', loadingPapers.has(favourite.id) ? 'animate-spin' : '']" />
-                {{ researchPapers.has(favourite.id) ? 'View Papers' : 'Find Research Papers' }}
+                Find Research Papers
               </button>
             </div>
           </div>
@@ -142,7 +156,7 @@
             Get AI-curated academic papers for your literature review
           </p>
           <p v-else class="text-secondary-600 text-xs mt-2">
-            ✓ {{ researchPapers.get(favourite.id).length }} papers retrieved
+            ✓ {{ researchPapers.get(favourite.id).length }} papers retrieved • Click "View Papers" to review
           </p>
           <p v-if="papersError.has(favourite.id)" class="text-red-600 text-xs mt-2">
             {{ papersError.get(favourite.id) }}
@@ -262,7 +276,8 @@
         <!-- Modal Body -->
         <div class="overflow-y-auto max-h-[calc(90vh-100px)] p-6">
           <div v-if="researchPapers.has(showingPapers)" class="space-y-4">
-            <div v-for="paper in researchPapers.get(showingPapers)" :key="paper.id"
+            <!-- Show first 4 or all papers based on expandedPapers state -->
+            <div v-for="(paper, index) in (expandedPapers ? researchPapers.get(showingPapers) : researchPapers.get(showingPapers).slice(0, 4))" :key="paper.id"
                  class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
               <!-- Paper Header -->
               <div class="flex items-start justify-between mb-2">
@@ -320,12 +335,65 @@
                 </a>
               </div>
             </div>
+            
+            <!-- View More/Less Button -->
+            <div v-if="researchPapers.get(showingPapers).length > 4" class="text-center pt-4 border-t border-gray-200">
+              <button 
+                @click="expandedPapers = !expandedPapers"
+                class="text-sm px-6 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors font-medium">
+                {{ expandedPapers ? 'View Less' : `View More (${researchPapers.get(showingPapers).length - 4} more papers)` }}
+              </button>
+            </div>
           </div>
           
           <!-- Empty State -->
           <div v-else class="text-center py-12">
             <BookOpen class="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p class="text-gray-500">No papers found</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteConfirm" 
+         class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+         @click.self="cancelDelete">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-slide-up">
+        <!-- Modal Header -->
+        <div class="bg-red-500 text-white px-6 py-4">
+          <h2 class="text-xl font-bold">Confirm Removal</h2>
+        </div>
+        
+        <!-- Modal Body -->
+        <div class="p-6">
+          <div class="flex items-start space-x-4 mb-6">
+            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Trash2 class="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">Remove from Favourites?</h3>
+              <p class="text-gray-600">
+                Are you sure you want to remove <span class="font-semibold">"{{ deleteConfirmTitle }}"</span> from your saved projects?
+              </p>
+              <p class="text-sm text-gray-500 mt-2">
+                This will also remove all associated notes and progress tracking data. This action cannot be undone.
+              </p>
+            </div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div class="flex gap-3">
+            <button 
+              @click="cancelDelete"
+              class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+              Cancel
+            </button>
+            <button 
+              @click="confirmDelete"
+              class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium">
+              Remove Project
+            </button>
           </div>
         </div>
       </div>
@@ -363,10 +431,11 @@ import {
   Heart, Plus, Calendar, Edit3, Trash2, Clock, FileText, 
   Loader2, Save, TrendingUp, BookOpen, ExternalLink, FileDown 
 } from 'lucide-vue-next'
-import { ref, onMounted, defineEmits } from 'vue'
+import { ref, onMounted, defineEmits, watch } from 'vue'
 import favouriteService from '../services/favouriteService.js'
 import progressService from '../services/progressService.js'
 import scholarService from '../services/scholarService.js'
+import authService, { isAuthenticated } from '../services/authService.js'
 import ProjectProgressTracker from './ProjectProgressTracker.vue'
 
 // Define emits
@@ -381,18 +450,86 @@ const removingFavourites = ref(new Set())
 const showingTimeline = ref(null)
 const initializingProgress = ref(new Set())
 
-// Research papers state
-const researchPapers = ref(new Map()) // Map of favouriteId -> papers array
+// Confirmation dialog state
+const showDeleteConfirm = ref(false)
+const deleteConfirmFavouriteId = ref(null)
+const deleteConfirmTitle = ref('')
+
+// Research papers state - with localStorage persistence
+const PAPERS_STORAGE_KEY = 'fyp_research_papers'
+
+// Helper function to load papers from localStorage
+const loadPapersFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(PAPERS_STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      // Convert array back to Map
+      return new Map(parsed)
+    }
+  } catch (error) {
+    console.error('Error loading papers from localStorage:', error)
+  }
+  return new Map()
+}
+
+// Helper function to save papers to localStorage
+const savePapersToStorage = () => {
+  try {
+    // Convert Map to array for JSON serialization
+    const papersArray = Array.from(researchPapers.value.entries())
+    localStorage.setItem(PAPERS_STORAGE_KEY, JSON.stringify(papersArray))
+  } catch (error) {
+    console.error('Error saving papers to localStorage:', error)
+  }
+}
+
+const researchPapers = ref(loadPapersFromStorage()) // Map of favouriteId -> papers array
 const loadingPapers = ref(new Set()) // Set of favouriteIds currently loading
 const showingPapers = ref(null) // Currently viewing papers for this favouriteId
 const papersError = ref(new Map()) // Map of favouriteId -> error message
+const expandedPapers = ref(false) // Whether to show all papers or just first 4
 
 // Load favourites on component mount
 onMounted(async () => {
+  console.log('FavouritesPage mounted, checking authentication...')
+  console.log('Is authenticated:', isAuthenticated.value)
+  console.log('Auth token:', localStorage.getItem('auth_token'))
+  
+  // Wait a moment for auth to initialize if needed
+  if (!isAuthenticated.value && localStorage.getItem('auth_token')) {
+    console.log('Token exists but user not loaded yet, waiting for auth initialization...')
+    // Wait up to 2 seconds for auth to initialize
+    let attempts = 0
+    while (!isAuthenticated.value && attempts < 20) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+      attempts++
+    }
+  }
+  
+  if (!isAuthenticated.value) {
+    console.warn('User not authenticated, cannot load favourites')
+    return
+  }
+  
   try {
+    console.log('Loading favourites...')
     await favouriteService.getFavourites()
+    console.log('Favourites loaded:', favouriteService.favourites.value)
   } catch (error) {
     console.error('Error loading favourites:', error)
+  }
+})
+
+// Watch for authentication changes and reload favourites
+watch(isAuthenticated, async (newValue) => {
+  if (newValue) {
+    console.log('Authentication detected, loading favourites...')
+    try {
+      await favouriteService.getFavourites()
+    } catch (error) {
+      console.error('Error loading favourites after auth change:', error)
+    }
   }
 })
 
@@ -429,10 +566,18 @@ const toggleResearchPapers = async (favouriteId) => {
   // If papers already retrieved, just show them
   if (researchPapers.value.has(favouriteId)) {
     showingPapers.value = favouriteId
+    expandedPapers.value = false
     return
   }
   
   // Otherwise, fetch papers (only once to save credits)
+  await fetchResearchPapers(favouriteId)
+}
+
+const refetchPapers = async (favouriteId) => {
+  if (!confirm('This will fetch new papers and replace the current ones. Continue?')) {
+    return
+  }
   await fetchResearchPapers(favouriteId)
 }
 
@@ -449,11 +594,13 @@ const fetchResearchPapers = async (favouriteId) => {
     const projectTitle = favourite.custom_title || favourite.project_topic?.title || 'Untitled'
     const projectDescription = favourite.project_topic?.description || ''
     
-    // Always use searchPapers - it handles API vs mock data internally
-    const papers = await scholarService.searchPapers(projectTitle, projectDescription, 5)
+    // Fetch 10 papers instead of 5
+    const papers = await scholarService.searchPapers(projectTitle, projectDescription, 10)
     
     researchPapers.value.set(favouriteId, papers)
+    savePapersToStorage() // Persist to localStorage
     showingPapers.value = favouriteId
+    expandedPapers.value = false
     
   } catch (error) {
     console.error('Error fetching research papers:', error)
@@ -465,9 +612,9 @@ const fetchResearchPapers = async (favouriteId) => {
 
 const closePapers = () => {
   showingPapers.value = null
+  expandedPapers.value = false
 }
 
-// Get project info for timeline customization
 const getProjectInfo = (favouriteId) => {
   if (!favouriteId) return null
   
@@ -508,9 +655,15 @@ const saveNotes = async (favouriteId) => {
 
 // Remove favourite
 const removeFavourite = async (favouriteId) => {
-  if (!confirm('Are you sure you want to remove this project from your favourites?')) {
-    return
-  }
+  const favourite = favouriteService.favourites.value.find(f => f.id === favouriteId)
+  deleteConfirmTitle.value = favourite?.custom_title || favourite?.project_topic?.title || 'this project'
+  deleteConfirmFavouriteId.value = favouriteId
+  showDeleteConfirm.value = true
+}
+
+const confirmDelete = async () => {
+  const favouriteId = deleteConfirmFavouriteId.value
+  showDeleteConfirm.value = false
   
   removingFavourites.value.add(favouriteId)
   try {
@@ -520,7 +673,15 @@ const removeFavourite = async (favouriteId) => {
     alert('Error removing favourite: ' + error.message)
   } finally {
     removingFavourites.value.delete(favouriteId)
+    deleteConfirmFavouriteId.value = null
+    deleteConfirmTitle.value = ''
   }
+}
+
+const cancelDelete = () => {
+  showDeleteConfirm.value = false
+  deleteConfirmFavouriteId.value = null
+  deleteConfirmTitle.value = ''
 }
 
 // Utility functions
