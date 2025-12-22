@@ -13,16 +13,16 @@ def promote_to_admin(email):
     with app.app_context():
         user = User.query.filter_by(email=email).first()
         if not user:
-            print(f"❌ User with email '{email}' not found")
-            return False
+            print(f"[X] User with email '{email}' not found")
+            return
         
         if user.role == 'admin':
-            print(f"✓ User '{email}' is already an admin")
-            return True
+            print(f"[✓] User '{email}' is already an admin")
+            return
         
         user.role = 'admin'
         db.session.commit()
-        print(f"✅ Successfully promoted '{email}' to admin role")
+        print(f"[✓] Successfully promoted '{email}' to admin role")
         return True
 
 if __name__ == '__main__':

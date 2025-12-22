@@ -247,9 +247,9 @@
         </div>
 
         <!-- Admin Features Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <button
-            @click="setActiveView('admin')"
+            @click="setActiveView('admin', 'overview')"
             class="bg-white rounded-xl shadow-md p-8 text-left hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-purple-500 group"
           >
             <div class="flex items-center space-x-4 mb-4">
@@ -262,7 +262,7 @@
           </button>
 
           <button
-            @click="setActiveView('admin')"
+            @click="setActiveView('admin', 'users')"
             class="bg-white rounded-xl shadow-md p-8 text-left hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-blue-500 group"
           >
             <div class="flex items-center space-x-4 mb-4">
@@ -275,7 +275,7 @@
           </button>
 
           <button
-            @click="setActiveView('admin')"
+            @click="setActiveView('admin', 'topics')"
             class="bg-white rounded-xl shadow-md p-8 text-left hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-green-500 group"
           >
             <div class="flex items-center space-x-4 mb-4">
@@ -288,20 +288,7 @@
           </button>
 
           <button
-            @click="setActiveView('admin')"
-            class="bg-white rounded-xl shadow-md p-8 text-left hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-indigo-500 group"
-          >
-            <div class="flex items-center space-x-4 mb-4">
-              <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Settings class="w-7 h-7 text-white" />
-              </div>
-              <h3 class="text-xl font-bold text-gray-900">AI Settings</h3>
-            </div>
-            <p class="text-gray-600 text-sm">Configure AI providers, manage API keys, and set default models for topic generation</p>
-          </button>
-
-          <button
-            @click="setActiveView('admin')"
+            @click="setActiveView('admin', 'analytics')"
             class="bg-white rounded-xl shadow-md p-8 text-left hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-orange-500 group"
           >
             <div class="flex items-center space-x-4 mb-4">
@@ -311,19 +298,6 @@
               <h3 class="text-xl font-bold text-gray-900">Analytics & Reports</h3>
             </div>
             <p class="text-gray-600 text-sm">View usage statistics, generation trends, and detailed analytics reports</p>
-          </button>
-
-          <button
-            @click="setActiveView('admin')"
-            class="bg-white rounded-xl shadow-md p-8 text-left hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-red-500 group"
-          >
-            <div class="flex items-center space-x-4 mb-4">
-              <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Database class="w-7 h-7 text-white" />
-              </div>
-              <h3 class="text-xl font-bold text-gray-900">System Health</h3>
-            </div>
-            <p class="text-gray-600 text-sm">Monitor system performance, database status, and API health metrics</p>
           </button>
         </div>
       </div>
@@ -400,7 +374,12 @@
     </main>
 
     <!-- Admin Dashboard View -->
-    <AdminDashboard v-if="activeView === 'admin'" @exit-admin="setActiveView('home')" />
+    <AdminDashboard 
+      v-if="activeView === 'admin'" 
+      :key="adminActiveTab"
+      :initialTab="adminActiveTab"
+      @exit-admin="setActiveView('home')" 
+    />
 
     <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 py-12">
@@ -501,6 +480,9 @@ const userDropdownOpen = ref(false)
 // View state - persisted in localStorage
 const activeView = ref(localStorage.getItem('activeView') || 'home')
 
+// Admin tab state
+const adminActiveTab = ref('overview')
+
 // Admin stats
 const adminQuickStats = ref({
   users: 0,
@@ -509,10 +491,19 @@ const adminQuickStats = ref({
   active: 0
 })
 
-const setActiveView = (view) => {
+const setActiveView = (view, tab = null) => {
   activeView.value = view
   // Persist view to localStorage
   localStorage.setItem('activeView', view)
+  
+  // Set admin tab if provided
+  if (view === 'admin' && tab) {
+    adminActiveTab.value = tab
+  } else if (view === 'admin' && !tab) {
+    // Default to overview if no tab specified
+    adminActiveTab.value = 'overview'
+  }
+  
   if (view === 'home') {
     // Optionally scroll to top when going home
     window.scrollTo({ top: 0, behavior: 'smooth' })

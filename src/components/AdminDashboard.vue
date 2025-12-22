@@ -61,11 +61,6 @@
         <AdminTopics />
       </div>
 
-      <!-- AI Settings Tab -->
-      <div v-if="activeTab === 'ai'" class="space-y-6">
-        <AdminAISettings />
-      </div>
-
       <!-- Analytics Tab -->
       <div v-if="activeTab === 'analytics'" class="space-y-6">
         <AdminAnalytics />
@@ -75,23 +70,35 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Shield, LogOut, LayoutDashboard, Users, BookOpen, Settings, BarChart3 } from 'lucide-vue-next'
+import { ref, watch } from 'vue'
+import { Shield, LogOut, LayoutDashboard, Users, BookOpen, BarChart3 } from 'lucide-vue-next'
 import AdminOverview from './admin/AdminOverview.vue'
 import AdminUsers from './admin/AdminUsers.vue'
 import AdminTopics from './admin/AdminTopics.vue'
-import AdminAISettings from './admin/AdminAISettings.vue'
 import AdminAnalytics from './admin/AdminAnalytics.vue'
+
+const props = defineProps({
+  initialTab: {
+    type: String,
+    default: 'overview'
+  }
+})
 
 defineEmits(['exit-admin'])
 
-const activeTab = ref('overview')
+const activeTab = ref(props.initialTab)
+
+// Watch for changes to initialTab prop with immediate execution
+watch(() => props.initialTab, (newTab) => {
+  if (newTab) {
+    activeTab.value = newTab
+  }
+}, { immediate: true })
 
 const tabs = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'topics', label: 'Topics', icon: BookOpen },
-  { id: 'ai', label: 'AI Settings', icon: Settings },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 }
 ]
 </script>

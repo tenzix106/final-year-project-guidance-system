@@ -60,7 +60,7 @@
           <div class="flex items-center gap-4 flex-1">
             <!-- Phase Number Badge -->
             <div class="phase-badge" :class="getPhaseBadgeClass(phase.status)">
-              <span v-if="phase.status === 'completed'" class="text-white text-lg">✓</span>
+              <Check v-if="phase.status === 'completed'" class="w-5 h-5 text-white" />
               <span v-else class="text-white font-semibold">{{ index + 1 }}</span>
             </div>
 
@@ -287,6 +287,7 @@
 </template>
 
 <script setup>
+import { Check } from 'lucide-vue-next'
 import { ref, computed, onMounted, watch } from 'vue';
 import progressService from '../services/progressService.js';
 

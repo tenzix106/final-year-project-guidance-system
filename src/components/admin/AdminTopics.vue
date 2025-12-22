@@ -81,6 +81,48 @@
         </button>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Topic</h3>
+        <p class="text-gray-600 mb-4">
+          Are you sure you want to delete <span class="font-semibold">{{ deleteConfirmTitle }}</span>?
+        </p>
+        <p class="text-sm text-red-600 mb-6">
+          ⚠️ This action cannot be undone.
+        </p>
+        <div class="flex space-x-3">
+          <button
+            @click="cancelDelete"
+            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            @click="confirmDelete"
+            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
+          >
+            Delete Topic
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Message Modal -->
+    <div v-if="showErrorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+        <h3 class="text-xl font-bold text-red-600 mb-2">Cannot Delete Topic</h3>
+        <p class="text-gray-700 mb-2 font-semibold">{{ errorModalTitle }}</p>
+        <p class="text-gray-600 mb-6">{{ errorModalMessage }}</p>
+        <button
+          @click="showErrorModal = false"
+          class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+        >
+          Got it
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -93,6 +135,12 @@ const loading = ref(true)
 const topics = ref([])
 const searchQuery = ref('')
 const sourceFilter = ref('')
+const showDeleteConfirm = ref(false)
+const showErrorModal = ref(false)
+const deleteConfirmTitle = ref('')
+const errorModalTitle = ref('')
+const errorModalMessage = ref('')
+const topicToDelete = ref(null)
 const pagination = ref({
   page: 1,
   per_page: 20,
@@ -128,10 +176,21 @@ const loadPage = (page) => {
   fetchTopics(page)
 }
 
-const deleteTopic = async (topic) => {
-  if (!confirm(`Are you sure you want to delete "${topic.title}"?`)) {
-    return
-  }
+const deleteTopic = (topic) => {
+  topicToDelete.value = topic
+  deleteConfirmTitle.value = topic.title
+  showDeleteConfirm.value = true
+}
+
+const cancelDelete = () => {
+  showDeleteConfirm.value = false
+  topicToDelete.value = null
+  deleteConfirmTitle.value = ''
+}
+
+const confirmDelete = async () => {
+  const topic = topicToDelete.value
+  showDeleteConfirm.value = false
   
   try {
     const token = localStorage.getItem('auth_token')
@@ -140,9 +199,45 @@ const deleteTopic = async (topic) => {
       { headers: { Authorization: `Bearer ${token}` } }
     )
     await fetchTopics(pagination.value.page)
+    topicToDelete.value = null
+    deleteConfirmTitle.value = ''
   } catch (error) {
     console.error('Error deleting topic:', error)
-    alert(error.response?.data?.message || 'Failed to delete topic')
+    
+    // Show detailed error modal for referenced topics
+    if (error.response?.status === 400) {
+      const message = error.response.data?.message || 'Failed to delete topic'
+      errorModalTitle.value = topic.title
+      
+      // Parse the error message to show user-friendly information
+      if (message.includes('referenced by')) {
+        const match = message.match(/(\d+) saved projects and (\d+) generated projects/)
+        if (match) {
+          const savedCount = parseInt(match[1])
+          const generatedCount = parseInt(match[2])
+          
+          if (savedCount > 0) {
+            errorModalMessage.value = `This topic is currently saved by ${savedCount} student${savedCount > 1 ? 's' : ''}. It cannot be deleted while students have it in their favourites. Please ask students to remove it from their saved projects first, or archive the topic instead of deleting it.`
+          } else {
+            errorModalMessage.value = `This topic has been used to generate ${generatedCount} project${generatedCount > 1 ? 's' : ''}. It cannot be deleted to maintain data integrity. Consider archiving it instead.`
+          }
+        } else {
+          errorModalMessage.value = message
+        }
+      } else {
+        errorModalMessage.value = message
+      }
+      
+      showErrorModal.value = true
+    } else {
+      // Generic error
+      errorModalTitle.value = 'Error'
+      errorModalMessage.value = error.response?.data?.message || 'Failed to delete topic. Please try again.'
+      showErrorModal.value = true
+    }
+    
+    topicToDelete.value = null
+    deleteConfirmTitle.value = ''
   }
 }
 

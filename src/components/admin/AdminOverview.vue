@@ -7,6 +7,14 @@
       <Loader2 class="w-8 h-8 animate-spin text-primary-600" />
     </div>
 
+    <!-- Error State -->
+    <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+      <p class="text-red-800 font-medium">{{ error }}</p>
+      <button @click="fetchStats()" class="mt-4 btn-primary">
+        Retry
+      </button>
+    </div>
+
     <!-- Stats Grid -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <!-- Total Users -->
@@ -128,10 +136,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Users, BookOpen, Sparkles, Heart, UserPlus, Activity, Loader2, Settings } from 'lucide-vue-next'
+import { Users, BookOpen, Sparkles, Heart, TrendingUp, Loader2 } from 'lucide-vue-next'
 import axios from 'axios'
 
 const loading = ref(true)
+const error = ref(null)
 const stats = ref({
   total_users: 0,
   total_students: 0,
@@ -145,14 +154,40 @@ const stats = ref({
 
 const fetchStats = async () => {
   loading.value = true
+  error.value = null
   try {
     const token = localStorage.getItem('auth_token')
+    if (!token) {
+      error.value = 'No authentication token found. Please log in again.'
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 2000)
+      return
+    }
+    
     const response = await axios.get('http://127.0.0.1:5000/api/admin/stats/overview', {
       headers: { Authorization: `Bearer ${token}` }
     })
     stats.value = response.data
-  } catch (error) {
-    console.error('Error fetching stats:', error)
+  } catch (err) {
+    console.error('Error fetching stats:', err)
+    if (err.response) {
+      console.error('Response data:', err.response.data)
+      console.error('Response status:', err.response.status)
+      
+      // Redirect to home on authentication/authorization errors
+      if (err.response.status === 401 || err.response.status === 403 || err.response.status === 422) {
+        error.value = err.response.data?.message || 'Session expired. Redirecting to home page...'
+        setTimeout(() => {
+          window.location.href = '/'
+        }, 2000)
+        return
+      }
+      
+      error.value = err.response.data?.message || `Error: ${err.response.status} - Failed to load statistics`
+    } else {
+      error.value = 'Network error. Please check if the backend server is running.'
+    }
   } finally {
     loading.value = false
   }
