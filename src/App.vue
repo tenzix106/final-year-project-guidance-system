@@ -5,8 +5,8 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center shadow-md">
-              <GraduationCap class="w-6 h-6 text-white" />
+            <div class="w-10 h-10 flex items-center justify-center">
+              <img src="/education.svg" alt="FYP Logo" class="w-full h-full text-primary-600" />
             </div>
             <div>
               <h1 class="text-2xl font-bold text-primary-600">fip.</h1>
@@ -97,8 +97,8 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center shadow-md">
-              <GraduationCap class="w-6 h-6 text-white" />
+            <div class="w-10 h-10 flex items-center justify-center">
+              <img src="/logo.svg" alt="FYP Logo" class="w-full h-full text-primary-600" />
             </div>
             <div>
               <h1 class="text-2xl font-bold text-primary-600">fip.</h1>
@@ -387,8 +387,8 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <div class="flex items-center space-x-3 mb-4">
-              <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center shadow-md">
-                <GraduationCap class="w-5 h-5 text-white" />
+              <div class="w-8 h-8 flex items-center justify-center">
+                <img src="/logo.svg" alt="FYP Logo" class="w-full h-full text-primary-600" />
               </div>
               <span class="text-xl font-bold text-primary-600">FYP Guidance</span>
             </div>

@@ -130,9 +130,12 @@
             required
           >
             <option value="">Select academic year</option>
-            <option value="2024">2024</option>
-            <option value="2025">2025</option>
-            <option value="2026">2026</option>
+            <option value="Year 1">Year 1</option>
+            <option value="Year 2">Year 2</option>
+            <option value="Year 3">Year 3</option>
+            <option value="Year 4">Year 4</option>
+            <option value="Year 5+">Year 5+</option>
+            <option value="Graduate">Graduate Student</option>
           </select>
           <p v-if="showValidation && validationErrors.academicYear" class="mt-1 text-sm text-red-600">{{ validationErrors.academicYear }}</p>
         </div>
@@ -425,12 +428,9 @@ const populateFromProfile = () => {
   }
   
   if (user.academic_year) {
-    // Extract year number from formats like "Year 3" or "2024"
-    const yearMatch = user.academic_year.match(/\d{4}/)
-    if (yearMatch) {
-      formData.academicYear = yearMatch[0]
-      hasData = true
-    }
+    // Use academic_year directly (Year 1, Year 2, etc.)
+    formData.academicYear = user.academic_year
+    hasData = true
   }
   
   // Populate skills from profile
