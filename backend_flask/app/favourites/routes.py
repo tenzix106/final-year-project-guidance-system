@@ -19,6 +19,10 @@ def get_favourites():
     favourites = []
     for saved_project in saved_projects:
         project_topic = ProjectTopic.query.get(saved_project.project_topic_id)
+        
+        # Get phases for this project
+        phases = saved_project.phases.order_by('phase_order').all() if saved_project.phases else []
+        
         favourite_data = {
             "id": saved_project.id,
             "user_notes": saved_project.user_notes,
@@ -27,6 +31,7 @@ def get_favourites():
             "status": saved_project.status,
             "progress_percentage": saved_project.progress_percentage,
             "saved_at": saved_project.saved_at.isoformat(),
+            "phases": [phase.to_dict() for phase in phases],
             "project_topic": {
                 "id": project_topic.id,
                 "title": project_topic.title,

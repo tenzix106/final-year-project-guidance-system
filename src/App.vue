@@ -23,6 +23,10 @@
                 <Heart class="w-4 h-4" />
                 <span>My Favourites</span>
               </button>
+              <button v-if="isAuthenticated" @click="openProposalBuilder()" class="flex items-center space-x-1 text-gray-600 hover:text-primary-600 transition-colors">
+                <FileText class="w-4 h-4" />
+                <span>Proposal Builder</span>
+              </button>
               <a href="#resources" @click="scrollToSection('resources')" class="text-gray-600 hover:text-primary-600 transition-colors">Resources</a>
             </nav>
 
@@ -439,12 +443,19 @@
       @close="closeProfileModal"
       @updated="handleProfileUpdated"
     />
+
+    <!-- Proposal Builder Modal -->
+    <ProposalBuilderModal
+      :is-open="proposalBuilderOpen"
+      :project-topic="proposalBuilderTopic"
+      @close="closeProposalBuilder"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { GraduationCap, Sparkles, BookOpen, AlertCircle, User, LogOut, Heart, Settings, ChevronDown, Shield, LayoutDashboard, BarChart3, Database, Activity, Users } from 'lucide-vue-next'
+import { GraduationCap, Sparkles, BookOpen, AlertCircle, User, LogOut, Heart, Settings, ChevronDown, Shield, LayoutDashboard, BarChart3, Database, Activity, Users, FileText } from 'lucide-vue-next'
 import FYPForm from './components/FYPForm.vue'
 import FYPResults from './components/FYPResults.vue'
 import FYPResources from './components/FYPResources.vue'
@@ -454,6 +465,7 @@ import ProfileCompletionModal from './components/ProfileCompletionModal.vue'
 import ProfileModal from './components/ProfileModal.vue'
 import FavouritesPage from './components/FavouritesPage.vue'
 import AdminDashboard from './components/AdminDashboard.vue'
+import ProposalBuilderModal from './components/ProposalBuilderModal.vue'
 import aiService from './services/aiService.js'
 import authService, { isAuthenticated, currentUser } from './services/authService.js'
 import axios from 'axios'
@@ -473,6 +485,10 @@ const profileCompletionModalOpen = ref(false)
 
 // Profile state
 const profileModalOpen = ref(false)
+
+// Proposal builder state
+const proposalBuilderOpen = ref(false)
+const proposalBuilderTopic = ref(null)
 
 // User dropdown state
 const userDropdownOpen = ref(false)
@@ -872,6 +888,16 @@ const closeProfileModal = () => {
 
 const handleProfileUpdated = () => {
   console.log('Profile updated successfully')
+}
+
+const openProposalBuilder = (topic = null) => {
+  proposalBuilderTopic.value = topic
+  proposalBuilderOpen.value = true
+}
+
+const closeProposalBuilder = () => {
+  proposalBuilderOpen.value = false
+  proposalBuilderTopic.value = null
 }
 
 const toggleUserDropdown = (event) => {

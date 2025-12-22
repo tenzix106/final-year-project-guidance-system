@@ -146,7 +146,7 @@ Make sure the JSON is valid and properly formatted.`
   /**
    * Generate topics using Google Gemini API
    */
-  async generateWithGemini(prompt) {
+  async generateWithGemini(prompt, parseJson = true) {
     // Use Express backend for AI proxy to avoid CORS issues
     const backendBase = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:3002'
     const response = await fetch(`${backendBase}/api/generate-topics`, {
@@ -194,6 +194,12 @@ Make sure the JSON is valid and properly formatted.`
       throw new Error(`Gemini produced empty content (${finishReason}). Try again or refine inputs.`)
     }
 
+    // If parseJson is false, return raw text (for custom prompts)
+    if (!parseJson) {
+      return content
+    }
+
+    // Parse JSON for topic generation
     try {
       // Remove markdown code fences
       const withoutFences = content.replace(/```json\s*|```/g, '').trim()
@@ -309,6 +315,29 @@ Make sure the JSON is valid and properly formatted.`
         return true // Hugging Face can work without API key (with limitations)
       default:
         return false
+    }
+  }
+
+  /**
+   * Generate content with a custom prompt (for proposal builder, etc.)
+   * @param {string} prompt - Custom prompt text
+   * @returns {Promise<string>} Generated content as plain text
+   */
+  async generateWithCustomPrompt(prompt) {
+    try {
+      switch (this.provider) {
+        case 'gemini':
+          return await this.generateWithGemini(prompt, false) // Don't parse as JSON
+        case 'openai':
+          return await this.generateWithOpenAI(prompt)
+        case 'huggingface':
+          return await this.generateWithHuggingFace(prompt)
+        default:
+          throw new Error('Unsupported AI provider')
+      }
+    } catch (error) {
+      console.error('Custom Prompt Error:', error)
+      throw error
     }
   }
 }
