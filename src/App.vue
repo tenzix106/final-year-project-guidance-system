@@ -23,6 +23,10 @@
                 <Heart class="w-4 h-4" />
                 <span>My Favourites</span>
               </button>
+              <button v-if="isAuthenticated" @click="setActiveView('workspaces')" :class="activeView === 'workspaces' ? 'text-primary-600 font-semibold' : 'text-gray-600 hover:text-primary-600 transition-colors'" class="flex items-center space-x-1">
+                <Users class="w-4 h-4" />
+                <span>Workspaces</span>
+              </button>
               <button v-if="isAuthenticated" @click="openProposalBuilder()" class="flex items-center space-x-1 text-gray-600 hover:text-primary-600 transition-colors">
                 <FileText class="w-4 h-4" />
                 <span>Proposal Builder</span>
@@ -377,6 +381,11 @@
       <FavouritesPage @navigate-home="setActiveView('home')" />
     </main>
 
+    <!-- Workspaces Page View -->
+    <main v-if="activeView === 'workspaces'">
+      <WorkspacesPage />
+    </main>
+
     <!-- Admin Dashboard View -->
     <AdminDashboard 
       v-if="activeView === 'admin'" 
@@ -466,6 +475,7 @@ import ProfileModal from './components/ProfileModal.vue'
 import FavouritesPage from './components/FavouritesPage.vue'
 import AdminDashboard from './components/AdminDashboard.vue'
 import ProposalBuilderModal from './components/ProposalBuilderModal.vue'
+import WorkspacesPage from './components/WorkspacesPage.vue'
 import aiService from './services/aiService.js'
 import authService, { isAuthenticated, currentUser } from './services/authService.js'
 import axios from 'axios'

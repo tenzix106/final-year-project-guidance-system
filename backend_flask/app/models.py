@@ -363,3 +363,260 @@ class PhaseTask(db.Model):
         }
 
 
+class Workspace(db.Model):
+    """Collaborative workspace for group projects"""
+    __tablename__ = 'workspace'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(Text, nullable=True)
+    
+    # Owner
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Project association (optional - workspace can be linked to a saved project)
+    saved_project_id = db.Column(db.Integer, db.ForeignKey('saved_project.id'), nullable=True)
+    
+    # Settings
+    is_public = db.Column(db.Boolean, default=False, nullable=False)  # Public workspaces are discoverable
+    max_members = db.Column(db.Integer, default=10, nullable=False)
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    owner = db.relationship('User', foreign_keys=[owner_id], backref='owned_workspaces')
+    saved_project = db.relationship('SavedProject', backref='workspaces')
+    members = db.relationship('WorkspaceMember', back_populates='workspace', cascade='all, delete-orphan')
+    invites = db.relationship('WorkspaceInvite', back_populates='workspace', cascade='all, delete-orphan')
+    
+    def to_dict(self, include_members=True):
+        data = {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'owner_id': self.owner_id,
+            'owner_email': self.owner.email if self.owner else None,
+            'owner_name': self.owner.full_name if self.owner else None,
+            'saved_project_id': self.saved_project_id,
+            'is_public': self.is_public,
+            'max_members': self.max_members,
+            'member_count': len(self.members),
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+        
+        # Include saved project details if linked
+        if self.saved_project:
+            # Fetch the project topic using the foreign key
+            project_topic = ProjectTopic.query.get(self.saved_project.project_topic_id) if self.saved_project.project_topic_id else None
+            
+            data['saved_project'] = {
+                'id': self.saved_project.id,
+                'custom_title': self.saved_project.custom_title,
+                'user_notes': self.saved_project.user_notes,
+                'status': self.saved_project.status,
+                'progress_percentage': self.saved_project.progress_percentage,
+                'project_topic': {
+                    'id': project_topic.id,
+                    'title': project_topic.title,
+                    'description': project_topic.description,
+                    'difficulty': project_topic.difficulty,
+                    'duration': project_topic.duration
+                } if project_topic else None
+            }
+        
+        if include_members:
+            data['members'] = [member.to_dict() for member in self.members]
+            data['pending_invites'] = [invite.to_dict() for invite in self.invites if invite.status == 'pending']
+        
+        return data
+
+
+class WorkspaceMember(db.Model):
+    """Members of a collaborative workspace"""
+    __tablename__ = 'workspace_member'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    workspace_id = db.Column(db.Integer, db.ForeignKey('workspace.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Role and permissions
+    role = db.Column(db.String(20), default='member', nullable=False)  # owner, admin, member, viewer
+    can_edit = db.Column(db.Boolean, default=True, nullable=False)
+    can_invite = db.Column(db.Boolean, default=False, nullable=False)
+    
+    # Metadata
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    last_active = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    workspace = db.relationship('Workspace', back_populates='members')
+    user = db.relationship('User', backref='workspace_memberships')
+    
+    __table_args__ = (db.UniqueConstraint('workspace_id', 'user_id', name='unique_workspace_member'),)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'workspace_id': self.workspace_id,
+            'user_id': self.user_id,
+            'user_email': self.user.email if self.user else None,
+            'user_name': self.user.full_name if self.user else None,
+            'role': self.role,
+            'can_edit': self.can_edit,
+            'can_invite': self.can_invite,
+            'joined_at': self.joined_at.isoformat(),
+            'last_active': self.last_active.isoformat()
+        }
+
+
+class WorkspaceInvite(db.Model):
+    """Invitations to join a workspace"""
+    __tablename__ = 'workspace_invite'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    workspace_id = db.Column(db.Integer, db.ForeignKey('workspace.id'), nullable=False)
+    
+    # Invite details
+    email = db.Column(db.String(120), nullable=False)  # Email of invitee
+    invited_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Token for accepting invite
+    invite_token = db.Column(db.String(100), unique=True, nullable=False)
+    
+    # Status
+    status = db.Column(db.String(20), default='pending', nullable=False)  # pending, accepted, rejected, expired
+    
+    # Role to assign when accepted
+    role = db.Column(db.String(20), default='member', nullable=False)
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=True)  # Invites can expire
+    responded_at = db.Column(db.DateTime, nullable=True)
+    
+    # Relationships
+    workspace = db.relationship('Workspace', back_populates='invites')
+    invited_by = db.relationship('User', foreign_keys=[invited_by_id], backref='sent_invites')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'workspace_id': self.workspace_id,
+            'workspace_name': self.workspace.name if self.workspace else None,
+            'email': self.email,
+            'invited_by_id': self.invited_by_id,
+            'invited_by_name': self.invited_by.full_name if self.invited_by else None,
+            'invite_token': self.invite_token,
+            'status': self.status,
+            'role': self.role,
+            'created_at': self.created_at.isoformat(),
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'responded_at': self.responded_at.isoformat() if self.responded_at else None
+        }
+
+
+class WorkspaceMessage(db.Model):
+    """Messages in workspace chat"""
+    __tablename__ = 'workspace_message'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    workspace_id = db.Column(db.Integer, db.ForeignKey('workspace.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Optional: message type (text, file, system notification)
+    message_type = db.Column(db.String(20), default='text', nullable=False)
+    
+    # Relationships
+    workspace = db.relationship('Workspace', backref='messages')
+    user = db.relationship('User', backref='workspace_messages')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'workspace_id': self.workspace_id,
+            'user_id': self.user_id,
+            'user_name': self.user.full_name if self.user else None,
+            'user_email': self.user.email if self.user else None,
+            'message': self.message,
+            'message_type': self.message_type,
+            'created_at': self.created_at.isoformat()
+        }
+
+
+class WorkspaceFile(db.Model):
+    """Files shared in workspace"""
+    __tablename__ = 'workspace_file'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    workspace_id = db.Column(db.Integer, db.ForeignKey('workspace.id'), nullable=False)
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    file_size = db.Column(db.Integer, nullable=False)  # in bytes
+    file_type = db.Column(db.String(100), nullable=True)  # MIME type
+    file_path = db.Column(db.String(500), nullable=False)  # storage path
+    
+    description = db.Column(Text, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    workspace = db.relationship('Workspace', backref='files')
+    uploader = db.relationship('User', backref='uploaded_files')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'workspace_id': self.workspace_id,
+            'uploaded_by': self.uploaded_by,
+            'uploader_name': self.uploader.full_name if self.uploader else None,
+            'uploader_email': self.uploader.email if self.uploader else None,
+            'filename': self.filename,
+            'original_filename': self.original_filename,
+            'file_size': self.file_size,
+            'file_type': self.file_type,
+            'description': self.description,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+
+class WorkspaceActivity(db.Model):
+    """Activity feed for workspace actions"""
+    __tablename__ = 'workspace_activity'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    workspace_id = db.Column(db.Integer, db.ForeignKey('workspace.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Null for system events
+    
+    activity_type = db.Column(db.String(50), nullable=False, index=True)
+    # Types: member_joined, member_left, file_uploaded, file_deleted, message_sent, workspace_created, etc.
+    
+    description = db.Column(Text, nullable=False)  # Human-readable description
+    activity_data = db.Column(JSON, nullable=True)  # Additional data (file_id, message_id, etc.)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    
+    # Relationships
+    workspace = db.relationship('Workspace', backref='activities')
+    user = db.relationship('User', backref='workspace_activities')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'workspace_id': self.workspace_id,
+            'user_id': self.user_id,
+            'user_name': self.user.full_name if self.user else None,
+            'user_email': self.user.email if self.user else None,
+            'activity_type': self.activity_type,
+            'description': self.description,
+            'activity_data': self.activity_data,
+            'created_at': self.created_at.isoformat()
+        }

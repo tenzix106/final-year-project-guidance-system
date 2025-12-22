@@ -5,6 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
 // Reactive user state
 const currentUser = ref(null)
 const authToken = ref(localStorage.getItem('auth_token'))
+const authReady = ref(false)
 
 // Computed properties
 const isAuthenticated = computed(() => !!authToken.value && !!currentUser.value)
@@ -29,6 +30,7 @@ class AuthService {
       // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname)
       await this.fetchCurrentUser()
+      authReady.value = true
       return
     }
     
@@ -36,6 +38,7 @@ class AuthService {
       // Clean URL and show error
       window.history.replaceState({}, document.title, window.location.pathname)
       console.error('OAuth error:', oauthError)
+      authReady.value = true
       return
     }
     
@@ -50,6 +53,7 @@ class AuthService {
         this.logout()
       }
     }
+    authReady.value = true
   }
 
   getAuthHeaders() {
@@ -234,6 +238,7 @@ const authService = new AuthService()
 export default authService
 
 // Export reactive refs for use in components
-export { currentUser, authToken, isAuthenticated, isLoading }
+export { currentUser, authToken, isAuthenticated, isLoading, authReady }
+
 
 
