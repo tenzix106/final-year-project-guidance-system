@@ -12,6 +12,7 @@ from .workspaces.routes import workspaces_bp
 from .chat.routes import chat_bp
 from .files.routes import files_bp
 from .activity.routes import activity_bp
+from .projects.routes import projects_bp
 from . import models  # ensure models are registered for migrations
 
 
@@ -55,6 +56,7 @@ def create_app() -> Flask:
     app.register_blueprint(chat_bp, url_prefix="/api/chat")
     app.register_blueprint(files_bp, url_prefix="/api/files")
     app.register_blueprint(activity_bp, url_prefix="/api/activity")
+    app.register_blueprint(projects_bp, url_prefix="/api/projects")
     
     # Register Socket.IO events
     from .sockets import register_socket_events

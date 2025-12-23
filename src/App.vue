@@ -106,7 +106,7 @@
         <div class="flex justify-between items-center py-4">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 flex items-center justify-center">
-              <img src="/logo.svg" alt="FYP Logo" class="w-full h-full text-primary-600" />
+              <img src="/education.svg" alt="FYP Logo" class="w-full h-full text-primary-600" />
             </div>
             <div>
               <h1 class="text-2xl font-bold text-primary-600">fip.</h1>
@@ -362,7 +362,7 @@
           </div>
         </div>
         
-        <FYPResults :topics="generatedTopics" :loading="isLoading" />
+        <FYPResults :topics="generatedTopics" :loading="isLoading" @generate-more="handleGenerateMore" />
       </section>
 
       <!-- Resources Section -->
@@ -599,6 +599,29 @@ const handleGenerateTopics = async (formData) => {
       // Fallback to mock data
       generatedTopics.value = generateMockTopics(formData)
     }
+    
+    // Track generation in backend (for analytics)
+    if (isAuthenticated.value && generatedTopics.value.length > 0) {
+      try {
+        const sessionId = `gen_${Date.now()}_${Math.random().toString(36).substring(7)}`
+        await fetch('http://127.0.0.1:5000/api/projects/track-generation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({
+            project_topics: generatedTopics.value,
+            form_data: formData,
+            ai_provider: useAI.value ? aiService.provider : 'mock',
+            session_id: sessionId
+          })
+        })
+      } catch (trackError) {
+        // Silently fail - tracking is not critical to user experience
+        console.log('Project generation tracking failed:', trackError)
+      }
+    }
   } catch (error) {
     console.error('Topic generation error:', error)
     aiError.value = error.message
@@ -608,6 +631,12 @@ const handleGenerateTopics = async (formData) => {
     isLoading.value = false
     scrollToResults()
   }
+}
+
+const handleGenerateMore = async () => {
+  // Trigger form submission to generate more topics
+  // The form will scroll into view and user can adjust settings if needed
+  scrollToForm()
 }
 
 // Check AI service status on component mount

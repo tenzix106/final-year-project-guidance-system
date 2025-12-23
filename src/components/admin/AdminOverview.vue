@@ -136,7 +136,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Users, BookOpen, Sparkles, Heart, TrendingUp, Loader2 } from 'lucide-vue-next'
+import { Users, BookOpen, Sparkles, Heart, TrendingUp, Loader2, UserPlus, Activity, Settings } from 'lucide-vue-next'
 import axios from 'axios'
 
 const loading = ref(true)

@@ -125,16 +125,12 @@
             />
             {{ isFavourite(topic.title) ? 'Remove from Favourites' : 'Save to Favourites' }}
           </button>
-          <button class="btn-secondary">
-            <Share2 class="w-4 h-4 mr-2" />
-            Share
-          </button>
         </div>
       </div>
 
       <!-- Load More Button -->
       <div class="text-center pt-8">
-        <button class="btn-secondary">
+        <button @click="generateMore" class="btn-secondary">
           <Plus class="w-4 h-4 mr-2" />
           Generate More Topics
         </button>
@@ -165,7 +161,7 @@
 
 <script setup>
 import { 
-  Loader2, Clock, Code, Tag, BookOpen, FileText, Heart, Share2, 
+  Loader2, Clock, Code, Tag, BookOpen, FileText, Heart, 
   Plus, Search, ArrowUp, FileText as PaperIcon, 
   PlayCircle as TutorialIcon, Wrench as ToolIcon 
 } from 'lucide-vue-next'
@@ -173,6 +169,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import ProposalModal from './ProposalModal.vue'
 import favouriteService from '../services/favouriteService.js'
 import authService from '../services/authService.js'
+
+const emit = defineEmits(['generate-more'])
 
 const props = defineProps({
   topics: {
@@ -291,6 +289,11 @@ const getResourceIcon = (type) => {
 
 const scrollToForm = () => {
   document.getElementById('form')?.scrollIntoView({ behavior: 'smooth' })
+}
+
+const generateMore = () => {
+  emit('generate-more')
+  scrollToForm()
 }
 
 // Load favourite statuses when component mounts or topics change
