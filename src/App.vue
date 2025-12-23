@@ -401,7 +401,7 @@
           <div>
             <div class="flex items-center space-x-3 mb-4">
               <div class="w-8 h-8 flex items-center justify-center">
-                <img src="/logo.svg" alt="FYP Logo" class="w-full h-full text-primary-600" />
+                <img src="/education.svg" alt="FYP Logo" class="w-full h-full text-primary-600" />
               </div>
               <span class="text-xl font-bold text-primary-600">FYP Guidance</span>
             </div>

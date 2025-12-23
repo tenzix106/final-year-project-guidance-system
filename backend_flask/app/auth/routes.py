@@ -244,3 +244,41 @@ def me():
         "role": user.role
     })
 
+
+@auth_bp.post("/change-password")
+@jwt_required()
+def change_password():
+    """Change user password (email auth only)"""
+    user_id = get_jwt_identity()
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        return jsonify({"message": "Invalid token"}), 401
+    
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"message": "user not found"}), 404
+    
+    # Only allow password change for email auth users
+    if user.auth_provider != 'email':
+        return jsonify({"message": "Password change not available for OAuth accounts"}), 403
+    
+    data = request.get_json(silent=True) or {}
+    current_password = data.get("current_password") or ""
+    new_password = data.get("new_password") or ""
+    
+    if not current_password or not new_password:
+        return jsonify({"message": "Current password and new password are required"}), 400
+    
+    if len(new_password) < 6:
+        return jsonify({"message": "New password must be at least 6 characters"}), 400
+    
+    # Verify current password
+    if not user.check_password(current_password):
+        return jsonify({"message": "Current password is incorrect"}), 401
+    
+    # Update password
+    user.set_password(new_password)
+    db.session.commit()
+    
+    return jsonify({"message": "Password changed successfully"}), 200

@@ -208,6 +208,182 @@
             </div>
           </div>
 
+          <!-- Change Password Section (Email users only) -->
+          <div v-if="currentUser?.auth_provider === 'email'" class="mt-6">
+            <div class="border-t border-gray-200 mb-6"></div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <Key class="w-5 h-5 mr-2" />
+              Change Password
+            </h3>
+            
+            <div v-if="!showPasswordFields" class="mb-4">
+              <button
+                @click="showPasswordFields = true"
+                type="button"
+                class="px-4 py-2 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors font-medium border border-primary-200"
+                :disabled="loading"
+              >
+                Update Password
+              </button>
+              <p class="text-xs text-gray-500 mt-2">Click to change your account password</p>
+            </div>
+
+            <div v-else class="space-y-4">
+              <!-- Password Change Error Message -->
+              <div v-if="passwordError" class="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+                <AlertCircle class="w-5 h-5 text-red-500 flex-shrink-0" />
+                <span class="text-red-700 text-sm">{{ passwordError }}</span>
+              </div>
+              
+              <!-- Password Change Success Message -->
+              <div v-if="passwordSuccess" class="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2">
+                <CheckCircle class="w-5 h-5 text-green-500 flex-shrink-0" />
+                <span class="text-green-700 text-sm">{{ passwordSuccess }}</span>
+              </div>
+              
+              <!-- Current Password -->
+              <div>
+                <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                <div class="relative">
+                  <Key class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    id="currentPassword"
+                    v-model="passwordData.currentPassword"
+                    type="password"
+                    class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-gray-50 focus:bg-white"
+                    placeholder="Enter current password"
+                    :disabled="loading"
+                  />
+                </div>
+              </div>
+
+              <!-- New Password -->
+              <div>
+                <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <div class="relative">
+                  <Key class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    id="newPassword"
+                    v-model="passwordData.newPassword"
+                    type="password"
+                    :class="[
+                      'w-full pl-10 pr-4 py-2.5 border rounded-xl focus:ring-2 transition-all duration-200 bg-gray-50 focus:bg-white',
+                      passwordData.newPassword && passwordData.newPassword.length < 6 
+                        ? 'border-red-300 focus:ring-red-200 focus:border-red-500' 
+                        : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
+                    ]"
+                    placeholder="Enter new password"
+                    :disabled="loading"
+                  />
+                </div>
+                <!-- Password Strength Indicator -->
+                <div v-if="passwordData.newPassword" class="mt-2">
+                  <div class="flex items-center space-x-2 mb-1">
+                    <div class="flex-1 bg-gray-200 rounded-full h-1.5">
+                      <div 
+                        :class="[
+                          'h-1.5 rounded-full transition-all duration-300',
+                          passwordStrength.color
+                        ]"
+                        :style="{ width: passwordStrength.width }"
+                      ></div>
+                    </div>
+                    <span :class="['text-xs font-medium', passwordStrength.textColor]">
+                      {{ passwordStrength.label }}
+                    </span>
+                  </div>
+                  <!-- Validation Messages -->
+                  <div class="space-y-1">
+                    <p v-if="passwordData.newPassword.length < 6" class="text-xs text-red-600 flex items-center">
+                      <XCircle class="w-3 h-3 mr-1" />
+                      Password must be at least 6 characters
+                    </p>
+                    <p v-else-if="passwordData.currentPassword && passwordData.newPassword === passwordData.currentPassword" class="text-xs text-red-600 flex items-center">
+                      <XCircle class="w-3 h-3 mr-1" />
+                      New password must be different from current password
+                    </p>
+                    <p v-else class="text-xs text-green-600 flex items-center">
+                      <Check class="w-3 h-3 mr-1" />
+                      Password length requirement met
+                    </p>
+                  </div>
+                </div>
+                <p v-else class="text-xs text-gray-500 mt-1">Minimum 6 characters required</p>
+              </div>
+
+              <!-- Confirm New Password -->
+              <div>
+                <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                <div class="relative">
+                  <Key class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    id="confirmPassword"
+                    v-model="passwordData.confirmPassword"
+                    type="password"
+                    :class="[
+                      'w-full pl-10 pr-4 py-2.5 border rounded-xl focus:ring-2 transition-all duration-200 bg-gray-50 focus:bg-white',
+                      passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword
+                        ? 'border-red-300 focus:ring-red-200 focus:border-red-500'
+                        : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
+                    ]"
+                    placeholder="Confirm new password"
+                    :disabled="loading"
+                  />
+                </div>
+                <!-- Match Validation -->
+                <div v-if="passwordData.confirmPassword" class="mt-2">
+                  <p v-if="passwordData.newPassword === passwordData.confirmPassword" class="text-xs text-green-600 flex items-center">
+                    <Check class="w-3 h-3 mr-1" />
+                    Passwords match
+                  </p>
+                  <p v-else class="text-xs text-red-600 flex items-center">
+                    <XCircle class="w-3 h-3 mr-1" />
+                    Passwords do not match
+                  </p>
+                </div>
+              </div>
+
+              <!-- Validation Summary -->
+              <div v-if="!canChangePassword && (passwordData.currentPassword || passwordData.newPassword || passwordData.confirmPassword)" class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div class="flex items-start space-x-2">
+                  <Shield class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div class="text-xs text-amber-800">
+                    <p class="font-medium mb-1">Please complete the following:</p>
+                    <ul class="space-y-0.5 list-disc list-inside">
+                      <li v-if="!passwordData.currentPassword">Enter your current password</li>
+                      <li v-if="!passwordData.newPassword">Enter a new password (min. 6 characters)</li>
+                      <li v-if="passwordData.newPassword && passwordData.newPassword.length < 6">New password must be at least 6 characters</li>
+                      <li v-if="passwordData.currentPassword && passwordData.newPassword && passwordData.newPassword === passwordData.currentPassword">New password must be different from current password</li>
+                      <li v-if="!passwordData.confirmPassword">Confirm your new password</li>
+                      <li v-if="passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword">Passwords must match</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <button
+                  @click="handlePasswordChange"
+                  type="button"
+                  :disabled="loading || !canChangePassword"
+                  class="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Loader2 v-if="loading" class="w-4 h-4 animate-spin" />
+                  <Key v-else class="w-4 h-4" />
+                  <span>{{ loading ? 'Updating...' : 'Change Password' }}</span>
+                </button>
+                <button
+                  @click="cancelPasswordChange"
+                  type="button"
+                  class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                  :disabled="loading"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Auth Provider Info -->
           <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
             <div class="flex items-center space-x-2 text-sm text-gray-600">
@@ -219,6 +395,9 @@
                 </span>
               </span>
             </div>
+            <p v-if="currentUser?.auth_provider === 'google'" class="text-xs text-gray-500 mt-1">
+              Password management is handled by Google
+            </p>
           </div>
         </form>
       </div>
@@ -252,7 +431,8 @@
 import { ref, computed, watch } from 'vue'
 import { 
   X, UserCircle, Mail, User, Hash, GraduationCap, Calendar, 
-  ChevronDown, AlertCircle, CheckCircle, Loader2, Save, Info 
+  ChevronDown, AlertCircle, CheckCircle, Loader2, Save, Info, Key, 
+  Check, XCircle, Shield 
 } from 'lucide-vue-next'
 import authService, { currentUser } from '../services/authService.js'
 
@@ -282,6 +462,46 @@ const formData = ref({
 
 const originalData = ref({})
 
+// Password change state
+const showPasswordFields = ref(false)
+const passwordError = ref('')
+const passwordSuccess = ref('')
+const passwordData = ref({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const canChangePassword = computed(() => {
+  return passwordData.value.currentPassword && 
+         passwordData.value.newPassword && 
+         passwordData.value.newPassword.length >= 6 &&
+         passwordData.value.newPassword === passwordData.value.confirmPassword &&
+         passwordData.value.newPassword !== passwordData.value.currentPassword // New password must be different
+})
+
+const passwordStrength = computed(() => {
+  const password = passwordData.value.newPassword
+  if (!password) return { width: '0%', color: 'bg-gray-300', label: '', textColor: 'text-gray-500' }
+  
+  let strength = 0
+  if (password.length >= 6) strength++
+  if (password.length >= 8) strength++
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++
+  if (/\d/.test(password)) strength++
+  if (/[^a-zA-Z0-9]/.test(password)) strength++
+  
+  if (strength <= 1) {
+    return { width: '25%', color: 'bg-red-500', label: 'Weak', textColor: 'text-red-600' }
+  } else if (strength <= 2) {
+    return { width: '50%', color: 'bg-amber-500', label: 'Fair', textColor: 'text-amber-600' }
+  } else if (strength <= 3) {
+    return { width: '75%', color: 'bg-blue-500', label: 'Good', textColor: 'text-blue-600' }
+  } else {
+    return { width: '100%', color: 'bg-green-500', label: 'Strong', textColor: 'text-green-600' }
+  }
+})
+
 // Initialize form with current user data
 watch(() => props.isOpen, (isOpen) => {
   if (isOpen && currentUser.value) {
@@ -307,6 +527,8 @@ const hasChanges = computed(() => {
 const clearMessages = () => {
   error.value = ''
   success.value = ''
+  passwordError.value = ''
+  passwordSuccess.value = ''
 }
 
 const closeModal = () => {
@@ -349,6 +571,59 @@ const handleSubmit = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const handlePasswordChange = async () => {
+  if (!canChangePassword.value || loading.value) return
+  
+  // Clear only password-specific messages
+  passwordError.value = ''
+  passwordSuccess.value = ''
+  loading.value = true
+  
+  try {
+    await authService.changePassword(
+      passwordData.value.currentPassword,
+      passwordData.value.newPassword
+    )
+    
+    passwordSuccess.value = 'Password changed successfully!'
+    
+    // Clear form and hide after a delay
+    setTimeout(() => {
+      cancelPasswordChange()
+    }, 2000)
+    
+  } catch (err) {
+    // Show specific error message
+    if (err.message.includes('incorrect')) {
+      passwordError.value = 'Current password is incorrect. Please try again.'
+    } else if (err.message.includes('at least 6')) {
+      passwordError.value = 'New password must be at least 6 characters long.'
+    } else if (err.message.includes('must be different')) {
+      passwordError.value = 'New password must be different from your current password.'
+    } else {
+      passwordError.value = err.message || 'Failed to change password. Please try again.'
+    }
+    
+    // Scroll to error message
+    setTimeout(() => {
+      document.getElementById('currentPassword')?.focus()
+    }, 100)
+  } finally {
+    loading.value = false
+  }
+}
+
+const cancelPasswordChange = () => {
+  showPasswordFields.value = false
+  passwordData.value = {
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  }
+  passwordError.value = ''
+  passwordSuccess.value = ''
 }
 </script>
 

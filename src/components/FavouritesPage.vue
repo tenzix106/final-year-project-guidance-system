@@ -319,17 +319,17 @@
               </p>
               
               <!-- Paper Actions -->
-              <div class="mt-3 flex gap-2">
+              <div class="mt-3 flex flex-wrap gap-2">
                 <a v-if="paper.doi" 
                    :href="`https://doi.org/${paper.doi}`" 
                    target="_blank"
-                   class="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
+                   class="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors max-w-full truncate">
                   DOI: {{ paper.doi }}
                 </a>
                 <a v-if="paper.pdf_url" 
                    :href="paper.pdf_url" 
                    target="_blank"
-                   class="text-xs px-3 py-1 bg-primary-100 text-primary-700 rounded-md hover:bg-primary-200 transition-colors flex items-center gap-1">
+                   class="text-xs px-3 py-1 bg-primary-100 text-primary-700 rounded-md hover:bg-primary-200 transition-colors flex items-center gap-1 flex-shrink-0">
                   <FileDown class="w-3 h-3" />
                   Download PDF
                 </a>

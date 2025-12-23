@@ -207,6 +207,33 @@ class AuthService {
     }
   }
 
+  async changePassword(currentPassword, newPassword) {
+    if (!authToken.value) {
+      throw new Error('Not authenticated')
+    }
+    
+    try {
+      const resp = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ 
+          current_password: currentPassword,
+          new_password: newPassword 
+        })
+      })
+      
+      if (!resp.ok) {
+        const err = await this.safeJson(resp)
+        throw new Error(err?.message || 'Failed to change password')
+      }
+      
+      return await resp.json()
+    } catch (error) {
+      console.error('Change password error:', error)
+      throw error
+    }
+  }
+
   async safeJson(resp) {
     try { 
       return await resp.json() 
