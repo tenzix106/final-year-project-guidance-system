@@ -151,12 +151,15 @@ class ProgressService {
           headers: authService.getAuthHeaders(),
           body: JSON.stringify({ 
             phase_id: phaseId, 
-            task_title: taskTitle 
+            task_name: taskTitle 
           })
         }
       )
 
-      if (!response.ok) throw new Error('Failed to add task')
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to add task')
+      }
 
       return await response.json()
 

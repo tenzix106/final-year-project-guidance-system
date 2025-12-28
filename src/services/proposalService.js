@@ -1,4 +1,5 @@
 import aiService from './aiService.js'
+import { jsPDF } from 'jspdf'
 
 class ProposalService {
   constructor() {
@@ -313,6 +314,186 @@ Include 4-6 phases covering: Research, Design, Implementation, Testing, Document
     }
 
     return markdown
+  }
+
+  exportToPDF(proposalData, projectInfo) {
+    const { title, studentName, program, supervisor = 'To be assigned' } = projectInfo
+    const date = new Date().toLocaleDateString('en-MY', { year: 'numeric', month: 'long', day: 'numeric' })
+
+    // Create new PDF document
+    const doc = new jsPDF()
+    
+    // Set font sizes
+    const titleSize = 20
+    const headingSize = 16
+    const subheadingSize = 12
+    const normalSize = 10
+    
+    let yPosition = 20
+    const pageWidth = doc.internal.pageSize.width
+    const margin = 20
+    const maxWidth = pageWidth - 2 * margin
+
+    // Helper function to add text with automatic page breaks
+    const addText = (text, fontSize, isBold = false, align = 'left') => {
+      doc.setFontSize(fontSize)
+      doc.setFont('helvetica', isBold ? 'bold' : 'normal')
+      
+      if (align === 'center') {
+        doc.text(text, pageWidth / 2, yPosition, { align: 'center' })
+        yPosition += fontSize / 2 + 2
+      } else {
+        const lines = doc.splitTextToSize(text, maxWidth)
+        lines.forEach(line => {
+          if (yPosition > 270) {
+            doc.addPage()
+            yPosition = 20
+          }
+          doc.text(line, margin, yPosition)
+          yPosition += fontSize / 2 + 2
+        })
+      }
+    }
+
+    const addSpace = (space = 5) => {
+      yPosition += space
+    }
+
+    // Title Page
+    doc.setFontSize(titleSize)
+    doc.setFont('helvetica', 'bold')
+    yPosition = 60
+    doc.text('Final Year Project Proposal', pageWidth / 2, yPosition, { align: 'center' })
+    
+    addSpace(20)
+    doc.setFontSize(headingSize)
+    doc.text(title, pageWidth / 2, yPosition, { align: 'center', maxWidth: maxWidth })
+    
+    addSpace(40)
+    doc.setFontSize(normalSize)
+    doc.setFont('helvetica', 'normal')
+    
+    // Project Info
+    const infoY = 140
+    doc.setFont('helvetica', 'bold')
+    doc.text('Student:', margin, infoY)
+    doc.setFont('helvetica', 'normal')
+    doc.text(studentName, margin + 30, infoY)
+    
+    doc.setFont('helvetica', 'bold')
+    doc.text('Program:', margin, infoY + 10)
+    doc.setFont('helvetica', 'normal')
+    doc.text(program, margin + 30, infoY + 10)
+    
+    doc.setFont('helvetica', 'bold')
+    doc.text('Supervisor:', margin, infoY + 20)
+    doc.setFont('helvetica', 'normal')
+    doc.text(supervisor, margin + 30, infoY + 20)
+    
+    doc.setFont('helvetica', 'bold')
+    doc.text('Date:', margin, infoY + 30)
+    doc.setFont('helvetica', 'normal')
+    doc.text(date, margin + 30, infoY + 30)
+
+    // New page for content
+    doc.addPage()
+    yPosition = 20
+
+    // 1. Background and Motivation
+    addText('1. Background and Motivation', headingSize, true)
+    addSpace(5)
+    addText(proposalData.background, normalSize, false)
+    addSpace(10)
+
+    // 2. Objectives
+    addText('2. Objectives', headingSize, true)
+    addSpace(5)
+    if (Array.isArray(proposalData.objectives)) {
+      proposalData.objectives.forEach((obj, idx) => {
+        addText(`${idx + 1}. ${obj}`, normalSize, false)
+        addSpace(3)
+      })
+    }
+    addSpace(10)
+
+    // 3. Scope
+    addText('3. Scope', headingSize, true)
+    addSpace(5)
+    
+    addText('In Scope', subheadingSize, true)
+    addSpace(3)
+    if (proposalData.scope?.inScope) {
+      proposalData.scope.inScope.forEach(item => {
+        addText(`• ${item}`, normalSize, false)
+        addSpace(2)
+      })
+    }
+    addSpace(5)
+    
+    addText('Out of Scope', subheadingSize, true)
+    addSpace(3)
+    if (proposalData.scope?.outScope) {
+      proposalData.scope.outScope.forEach(item => {
+        addText(`• ${item}`, normalSize, false)
+        addSpace(2)
+      })
+    }
+    addSpace(10)
+
+    // 4. Methodology
+    addText('4. Methodology', headingSize, true)
+    addSpace(5)
+    addText(proposalData.methodology, normalSize, false)
+    addSpace(10)
+
+    // 5. Project Timeline
+    addText('5. Project Timeline', headingSize, true)
+    addSpace(5)
+    if (Array.isArray(proposalData.timeline)) {
+      proposalData.timeline.forEach((phase, idx) => {
+        // Check if we need a new page
+        if (yPosition > 240) {
+          doc.addPage()
+          yPosition = 20
+        }
+        
+        addText(`${idx + 1}. ${phase.phase} (${phase.duration})`, subheadingSize, true)
+        addSpace(3)
+        
+        doc.setFontSize(normalSize)
+        doc.setFont('helvetica', 'bold')
+        if (yPosition > 270) {
+          doc.addPage()
+          yPosition = 20
+        }
+        doc.text('Activities:', margin, yPosition)
+        yPosition += normalSize / 2 + 2
+        
+        doc.setFont('helvetica', 'normal')
+        if (phase.activities) {
+          phase.activities.forEach(act => {
+            addText(`• ${act}`, normalSize, false)
+            addSpace(2)
+          })
+        }
+        
+        addSpace(3)
+        doc.setFont('helvetica', 'bold')
+        if (yPosition > 270) {
+          doc.addPage()
+          yPosition = 20
+        }
+        doc.text(`Deliverable: `, margin, yPosition)
+        doc.setFont('helvetica', 'normal')
+        const deliverableText = doc.splitTextToSize(phase.deliverable, maxWidth - 35)
+        doc.text(deliverableText, margin + 35, yPosition)
+        yPosition += (deliverableText.length * (normalSize / 2 + 2))
+        
+        addSpace(8)
+      })
+    }
+
+    return doc
   }
 
   downloadAsFile(content, filename, type = 'text/markdown') {

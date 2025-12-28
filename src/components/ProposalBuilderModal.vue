@@ -32,6 +32,17 @@
           </div>
         </div>
 
+        <!-- Success Message -->
+        <transition name="fade">
+          <div v-if="success" class="mx-6 mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3 shadow-sm">
+            <CheckCircle class="w-5 h-5 text-green-600 flex-shrink-0" />
+            <span class="text-green-800 text-sm font-medium flex-1">{{ success }}</span>
+            <button @click="success = ''" class="text-green-600 hover:text-green-800 transition-colors">
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+        </transition>
+
         <!-- Form Content -->
         <form @submit.prevent="handleNext" class="p-6 space-y-6">
           <!-- Step 1: Project Basics -->
@@ -555,7 +566,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { X, Sparkles, Loader2, AlertCircle, Plus, Trash2, Check, FileText, FileDown, Heart } from 'lucide-vue-next'
+import { X, Sparkles, Loader2, AlertCircle, Plus, Trash2, Check, FileText, FileDown, Heart, CheckCircle } from 'lucide-vue-next'
 import proposalService from '../services/proposalService.js'
 import authService from '../services/authService.js'
 import favouriteService from '../services/favouriteService.js'
@@ -575,6 +586,7 @@ const emit = defineEmits(['close'])
 
 const step = ref(1)
 const error = ref('')
+const success = ref('')
 const showPreview = ref(false)
 const previewContent = ref('')
 
@@ -826,15 +838,21 @@ const downloadProposal = () => {
     supervisor: formData.value.supervisor
   }
 
-  const markdown = proposalService.exportToMarkdown(proposalData, projectInfo)
-  const filename = `${formData.value.title.replace(/[^a-z0-9]/gi, '_')}_Proposal.md`
+  // Generate PDF instead of Markdown
+  const pdf = proposalService.exportToPDF(proposalData, projectInfo)
+  const filename = `${formData.value.title.replace(/[^a-z0-9]/gi, '_')}_Proposal.pdf`
   
-  proposalService.downloadAsFile(markdown, filename)
+  pdf.save(filename)
   
   showPreview.value = false
   
   // Show success message
-  alert('Proposal downloaded successfully!')
+  success.value = `Proposal "${formData.value.title}" downloaded successfully as PDF!`
+  
+  // Auto-hide success message after 5 seconds
+  setTimeout(() => {
+    success.value = ''
+  }, 5000)
 }
 </script>
 
@@ -847,6 +865,17 @@ const downloadProposal = () => {
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .animate-fade-in {

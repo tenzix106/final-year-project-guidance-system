@@ -84,13 +84,13 @@
             <div class="flex items-center space-x-2">
               <span class="text-sm font-medium text-gray-700">Difficulty:</span>
               <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                    :class="getDifficultyClass(favourite.project_topic.difficulty_level)">
-                {{ favourite.project_topic.difficulty_level }}
+                    :class="getDifficultyClass(favourite.project_topic.difficulty)">
+                {{ favourite.project_topic.difficulty }}
               </span>
             </div>
             <div class="flex items-center space-x-2">
               <Clock class="w-4 h-4 text-gray-500" />
-              <span class="text-sm text-gray-600">{{ favourite.project_topic.estimated_duration }}</span>
+              <span class="text-sm text-gray-600">{{ favourite.project_topic.duration }}</span>
             </div>
           </div>
 

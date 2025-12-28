@@ -60,22 +60,27 @@
     </div>
 
     <!-- Pagination -->
-    <div v-if="pagination.pages > 1" class="flex items-center justify-between bg-white px-6 py-4 rounded-xl border border-gray-200">
+    <div v-if="!loading" class="flex items-center justify-between bg-white px-6 py-4 rounded-xl border border-gray-200">
       <div class="text-sm text-gray-700">
-        Page {{ pagination.page }} of {{ pagination.pages }}
+        Showing {{ topics.length > 0 ? ((pagination.page - 1) * pagination.per_page) + 1 : 0 }} 
+        to {{ Math.min(pagination.page * pagination.per_page, pagination.total) }} 
+        of {{ pagination.total }} topics
       </div>
-      <div class="flex space-x-2">
+      <div class="flex items-center space-x-2">
         <button
           @click="loadPage(pagination.page - 1)"
           :disabled="!pagination.has_prev"
-          class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Previous
         </button>
+        <span class="text-sm text-gray-600">
+          Page {{ pagination.page }} of {{ pagination.pages || 1 }}
+        </span>
         <button
           @click="loadPage(pagination.page + 1)"
           :disabled="!pagination.has_next"
-          class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Next
         </button>
@@ -143,7 +148,7 @@ const errorModalMessage = ref('')
 const topicToDelete = ref(null)
 const pagination = ref({
   page: 1,
-  per_page: 20,
+  per_page: 5,
   total: 0,
   pages: 0,
   has_next: false,
@@ -158,7 +163,7 @@ const fetchTopics = async (page = 1) => {
       headers: { Authorization: `Bearer ${token}` },
       params: {
         page,
-        per_page: 20,
+        per_page: 5,
         search: searchQuery.value,
         source_type: sourceFilter.value
       }

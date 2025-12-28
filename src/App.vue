@@ -397,15 +397,15 @@
     <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-8">
+          <div class="flex-1">
             <div class="flex items-center space-x-3 mb-4">
               <div class="w-8 h-8 flex items-center justify-center">
                 <img src="/education.svg" alt="FYP Logo" class="w-full h-full text-primary-600" />
               </div>
               <span class="text-xl font-bold text-primary-600">FYP Guidance</span>
             </div>
-            <p class="text-secondary-600">
+            <p class="text-secondary-600 max-w-md">
               Empowering students with AI-driven project suggestions and comprehensive research guidance.
             </p>
           </div>
@@ -417,17 +417,9 @@
               <li><a href="#resources" class="text-gray-600 hover:text-primary-600 transition-colors">Resources</a></li>
             </ul>
           </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Support</h3>
-            <ul class="space-y-2">
-              <li><a href="#" class="text-gray-600 hover:text-primary-600 transition-colors">Help Center</a></li>
-              <li><a href="#" class="text-gray-600 hover:text-primary-600 transition-colors">Contact Us</a></li>
-              <li><a href="#" class="text-gray-600 hover:text-primary-600 transition-colors">Documentation</a></li>
-            </ul>
-          </div>
         </div>
-        <div class="border-t border-gray-200 mt-8 pt-8 text-center">
-          <p class="text-gray-600">&copy; 2024 FYP Guidance System. All rights reserved.</p>
+        <div class="border-t border-gray-200 pt-8 text-center">
+          <p class="text-gray-600">&copy; 2025 FYP Guidance System. All rights reserved.</p>
         </div>
       </div>
     </footer>
