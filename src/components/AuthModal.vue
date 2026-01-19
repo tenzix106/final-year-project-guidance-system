@@ -138,11 +138,10 @@
                 v-model="registerForm.password"
                 :type="showPassword ? 'text' : 'password'"
                 required
-                minlength="8"
+                minlength="6"
                 class="w-full pl-10 pr-12 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-gray-50 focus:bg-white"
-                placeholder="Create a strong password"
+                placeholder="Create a password (min 6 characters)"
                 :disabled="loading"
-                @input="validatePassword"
               />
               <button
                 type="button"
@@ -153,49 +152,10 @@
                 <EyeOff v-else class="w-5 h-5" />
               </button>
             </div>
-            
-            <!-- Password Strength Indicator -->
-            <div v-if="registerForm.password" class="mt-2 space-y-2">
-              <div class="flex items-center space-x-2">
-                <div class="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    class="h-full transition-all duration-300"
-                    :class="passwordStrengthColor"
-                    :style="{ width: passwordStrengthWidth }"
-                  ></div>
-                </div>
-                <span class="text-xs font-medium" :class="passwordStrengthTextColor">
-                  {{ passwordStrengthText }}
-                </span>
-              </div>
-              
-              <div class="bg-gray-50 rounded-lg p-3 space-y-1.5 text-xs">
-                <div class="flex items-center space-x-2" :class="passwordValidation.length ? 'text-green-600' : 'text-gray-500'">
-                  <CheckCircle v-if="passwordValidation.length" class="w-3.5 h-3.5" />
-                  <AlertCircle v-else class="w-3.5 h-3.5" />
-                  <span>At least 8 characters</span>
-                </div>
-                <div class="flex items-center space-x-2" :class="passwordValidation.uppercase ? 'text-green-600' : 'text-gray-500'">
-                  <CheckCircle v-if="passwordValidation.uppercase" class="w-3.5 h-3.5" />
-                  <AlertCircle v-else class="w-3.5 h-3.5" />
-                  <span>One uppercase letter</span>
-                </div>
-                <div class="flex items-center space-x-2" :class="passwordValidation.lowercase ? 'text-green-600' : 'text-gray-500'">
-                  <CheckCircle v-if="passwordValidation.lowercase" class="w-3.5 h-3.5" />
-                  <AlertCircle v-else class="w-3.5 h-3.5" />
-                  <span>One lowercase letter</span>
-                </div>
-                <div class="flex items-center space-x-2" :class="passwordValidation.number ? 'text-green-600' : 'text-gray-500'">
-                  <CheckCircle v-if="passwordValidation.number" class="w-3.5 h-3.5" />
-                  <AlertCircle v-else class="w-3.5 h-3.5" />
-                  <span>One number</span>
-                </div>
-                <div class="flex items-center space-x-2" :class="passwordValidation.special ? 'text-green-600' : 'text-gray-500'">
-                  <CheckCircle v-if="passwordValidation.special" class="w-3.5 h-3.5" />
-                  <AlertCircle v-else class="w-3.5 h-3.5" />
-                  <span>One special character (!@#$%^&*)</span>
-                </div>
-              </div>
+            <!-- Password Length Validation -->
+            <div v-if="registerForm.password && registerForm.password.length < 6" class="mt-2 text-sm text-red-600 flex items-center space-x-2 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+              <AlertCircle class="w-4 h-4 flex-shrink-0" />
+              <span class="font-medium">Password must be at least 6 characters long</span>
             </div>
           </div>
 
@@ -324,58 +284,9 @@ const registerForm = ref({
   confirmPassword: ''
 })
 
-const passwordValidation = ref({
-  length: false,
-  uppercase: false,
-  lowercase: false,
-  number: false,
-  special: false
-})
-
 // Computed properties
 const passwordsMatch = computed(() => {
   return registerForm.value.password === registerForm.value.confirmPassword
-})
-
-const isPasswordValid = computed(() => {
-  return Object.values(passwordValidation.value).every(v => v === true)
-})
-
-const passwordStrength = computed(() => {
-  const validCount = Object.values(passwordValidation.value).filter(v => v === true).length
-  return validCount
-})
-
-const passwordStrengthText = computed(() => {
-  const strength = passwordStrength.value
-  if (strength === 0) return 'Very Weak'
-  if (strength === 1) return 'Weak'
-  if (strength === 2) return 'Fair'
-  if (strength === 3) return 'Good'
-  if (strength === 4) return 'Strong'
-  return 'Very Strong'
-})
-
-const passwordStrengthWidth = computed(() => {
-  return `${(passwordStrength.value / 5) * 100}%`
-})
-
-const passwordStrengthColor = computed(() => {
-  const strength = passwordStrength.value
-  if (strength <= 1) return 'bg-red-500'
-  if (strength === 2) return 'bg-orange-500'
-  if (strength === 3) return 'bg-yellow-500'
-  if (strength === 4) return 'bg-blue-500'
-  return 'bg-green-500'
-})
-
-const passwordStrengthTextColor = computed(() => {
-  const strength = passwordStrength.value
-  if (strength <= 1) return 'text-red-600'
-  if (strength === 2) return 'text-orange-600'
-  if (strength === 3) return 'text-yellow-600'
-  if (strength === 4) return 'text-blue-600'
-  return 'text-green-600'
 })
 
 const canRegister = computed(() => {
@@ -383,7 +294,7 @@ const canRegister = computed(() => {
          registerForm.value.password && 
          registerForm.value.confirmPassword &&
          passwordsMatch.value &&
-         isPasswordValid.value
+         registerForm.value.password.length >= 6
 })
 
 // Methods
@@ -408,25 +319,6 @@ const resetForms = () => {
   loginForm.value = { email: '', password: '' }
   registerForm.value = { email: '', password: '', confirmPassword: '' }
   showPassword.value = false
-  passwordValidation.value = {
-    length: false,
-    uppercase: false,
-    lowercase: false,
-    number: false,
-    special: false
-  }
-}
-
-const validatePassword = () => {
-  const password = registerForm.value.password
-  
-  passwordValidation.value = {
-    length: password.length >= 8,
-    uppercase: /[A-Z]/.test(password),
-    lowercase: /[a-z]/.test(password),
-    number: /\d/.test(password),
-    special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
-  }
 }
 
 const handleLogin = async () => {

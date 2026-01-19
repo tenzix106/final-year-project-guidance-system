@@ -30,11 +30,11 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
 
   flask-backend:
-    build: ./backend
+    build: ./backend_flask
     ports:
       - "5000:5000"
     volumes:
-      - ./backend:/app
+      - ./backend_flask:/app
     environment:
       - FLASK_ENV=development
       - FLASK_DEBUG=1

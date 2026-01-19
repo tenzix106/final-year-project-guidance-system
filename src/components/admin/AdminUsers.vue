@@ -73,26 +73,16 @@
               {{ new Date(user.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }) }}
             </td>
             <td class="px-2 py-3 whitespace-nowrap text-sm">
-              <div class="flex items-center gap-2">
-                <button
-                  @click="toggleRole(user)"
-                  :disabled="user.id === currentUserId"
-                  class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors min-w-[90px] disabled:opacity-50 disabled:cursor-not-allowed"
-                  :class="user.role === 'admin' 
-                    ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border border-yellow-300' 
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300'"
-                >
-                  {{ user.role === 'admin' ? '→ Student' : '→ Admin' }}
-                </button>
-                <button
-                  @click="deleteUser(user)"
-                  :disabled="user.id === currentUserId"
-                  class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors bg-red-100 text-red-700 hover:bg-red-200 border border-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Delete user"
-                >
-                  Delete
-                </button>
-              </div>
+              <button
+                @click="toggleRole(user)"
+                :disabled="user.id === currentUserId"
+                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                :class="user.role === 'admin' 
+                  ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border border-yellow-300' 
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300'"
+              >
+                {{ user.role === 'admin' ? '→ Student' : '→ Admin' }}
+              </button>
             </td>
           </tr>
         </tbody>
@@ -221,51 +211,6 @@ const toggleRole = async (user) => {
   } catch (error) {
     console.error('Error updating user role:', error)
     const errorMessage = error.response?.data?.error || 'Failed to update user role. Please try again.'
-    alert(errorMessage)
-  }
-}
-
-const deleteUser = async (user) => {
-  // Prevent admins from deleting themselves
-  if (user.id === currentUserId.value) {
-    alert('You cannot delete your own account. Please ask another administrator to do this.')
-    return
-  }
-
-  // Show confirmation dialog with user details
-  const confirmMessage = `⚠️ WARNING: This action cannot be undone!\n\n` +
-    `Are you sure you want to permanently delete this user?\n\n` +
-    `Email: ${user.email}\n` +
-    `Name: ${user.full_name || 'N/A'}\n` +
-    `Role: ${user.role}\n\n` +
-    `This will delete:\n` +
-    `• The user account\n` +
-    `• All their generated projects\n` +
-    `• All their saved projects\n` +
-    `• All their activity history\n\n` +
-    `Type the user's email to confirm deletion:`
-
-  const confirmation = prompt(confirmMessage)
-  
-  if (confirmation !== user.email) {
-    if (confirmation !== null) {
-      alert('Deletion cancelled. The email did not match.')
-    }
-    return
-  }
-
-  try {
-    const token = localStorage.getItem('auth_token')
-    await axios.delete(
-      `http://127.0.0.1:5000/api/admin/users/${user.id}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    
-    alert(`User ${user.email} has been successfully deleted.`)
-    await fetchUsers(pagination.value.page)
-  } catch (error) {
-    console.error('Error deleting user:', error)
-    const errorMessage = error.response?.data?.message || 'Failed to delete user. Please try again.'
     alert(errorMessage)
   }
 }

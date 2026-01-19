@@ -7,11 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "dev:all": "concurrently \"npm run dev\" \"npm run proxy:express\" \"npm run backend:flask\"",
-    "dev:express": "concurrently \"npm run dev\" \"npm run proxy:express\"",
-    "proxy:express": "cd proxy && npm run dev",
-    "backend:flask": "cd backend && C:/Python313/python.exe -m flask --app wsgi run --debug",
-    "start:all": "concurrently --names \"Frontend,Proxy,Flask\" --prefix-colors \"cyan,yellow,magenta\" \"npm run dev\" \"npm run proxy:express\" \"npm run backend:flask\""
+    "dev:all": "concurrently \"npm run dev\" \"npm run backend:express\" \"npm run backend:flask\"",
+    "dev:express": "concurrently \"npm run dev\" \"npm run backend:express\"",
+    "backend:express": "cd backend && npm run dev",
+    "backend:flask": "cd backend_flask && C:/Python313/python.exe -m flask --app wsgi run --debug",
+    "start:all": "concurrently --names \"Frontend,Express,Flask\" --prefix-colors \"cyan,yellow,magenta\" \"npm run dev\" \"npm run backend:express\" \"npm run backend:flask\""
   },
   "dependencies": {
     "@vueuse/core": "^10.4.1",
