@@ -276,6 +276,7 @@
       <!-- Submit Button -->
       <div class="text-center pt-6">
         <button
+
           type="submit"
           :disabled="isSubmitting"
           class="btn-primary text-lg px-12 py-4 disabled:opacity-50 disabled:cursor-not-allowed"

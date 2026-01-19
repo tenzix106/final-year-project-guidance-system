@@ -115,7 +115,7 @@
           </section>
 
           <!-- Resources -->
-          <section v-if="topic?.resources?.length">
+          <!-- <section v-if="topic?.resources?.length">
             <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
               <BookOpen class="w-5 h-5 mr-2 text-primary-600" />
               Recommended Resources
@@ -139,7 +139,7 @@
                 </div>
               </div>
             </div>
-          </section>
+          </section> -->
 
           <!-- Timeline (if available) -->
           <section v-if="getProjectTimeline().length > 0">

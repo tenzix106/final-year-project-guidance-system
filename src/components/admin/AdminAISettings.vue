@@ -104,7 +104,7 @@
             <h4 class="text-sm font-semibold text-blue-900 mb-2">Configuration Instructions</h4>
             <ul class="text-sm text-blue-800 space-y-1 list-disc list-inside">
               <li>AI provider settings are configured via environment variables</li>
-              <li>Update the <code class="bg-blue-100 px-1 py-0.5 rounded">.env</code> file in the backend_flask directory</li>
+              <li>Update the <code class="bg-blue-100 px-1 py-0.5 rounded">.env</code> file in the backend directory</li>
               <li>Restart the Flask server after making changes</li>
               <li>At least one provider must be configured for AI topic generation to work</li>
             </ul>
