@@ -29,7 +29,7 @@
         <div class="flex items-start justify-between mb-6">
           <div class="flex-1">
             <div class="flex items-center space-x-3 mb-2">
-              <div class="w-10 h-10 bg-gradient-to-r from-primary-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
                 <span class="text-white font-bold text-lg">{{ index + 1 }}</span>
               </div>
               <div>
